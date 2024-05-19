@@ -38,7 +38,24 @@
     </nav>
     <div class="container">
         <h1>Cart</h1>
-        <p>Items in the cart will be displayed here.</p>
+        {% if books %}
+            <div class="row">
+                {% for book in books %}
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <img class="card-img-top" src="{{ book.image_url }}" alt="{{ book.title }}">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ book.title }}</h5>
+                                <p class="card-text">Author: {{ book.author }}</p>
+                                <p class="card-text">Price: €{{ book.price }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>Your cart is empty.</p>
+        {% endif %}
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
