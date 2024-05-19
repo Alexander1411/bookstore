@@ -9,7 +9,7 @@ app.secret_key = 'supersecretkey'
 # MySQL Configuration
 app.config["MYSQL_HOST"] = "10.0.0.4"  # My VM IP
 app.config["MYSQL_USER"] = "root"
-app.config["MYSQL_PASSWORD"] = "alexander"
+app.config["MYSQL_PASSWORD"] = "yourpassword"
 app.config["MYSQL_DB"] = "bookstore_users"
 
 mysql = MySQL(app)
