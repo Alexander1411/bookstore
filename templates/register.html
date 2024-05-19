@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Books</title>
+    <title>Register</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
@@ -38,22 +38,18 @@
         </div>
     </nav>
     <div class="container">
-        <h1>Books</h1>
-        <div class="row">
-            {% for book in books %}
-                <div class="col-md-4">
-                    <div class="card mb-4">
-                        <img class="card-img-top" src="{{ book.image_url }}" alt="{{ book.title }}">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ book.title }}</h5>
-                            <p class="card-text">Author: {{ book.author }}</p>
-                            <p class="card-text">Price: €{{ book.price }}</p>
-                            <a href="{{ url_for('add_to_cart', book_id=book.id) }}" class="btn btn-primary">Add to Cart</a>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
+        <h1>Register</h1>
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

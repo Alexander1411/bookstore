@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bookstore</title>
+    <title>Home</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
@@ -15,11 +15,11 @@
 
         <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-                <li class="nav-item active">
-                    <a class="nav-link" href="{{ url_for('home') }}">Home <span class="sr-only">(current)</span></a>
-                </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('books_page') }}">Books</a>
+                    <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for('books_page') }}">Books <span class="sr-only">(current)</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('cart') }}">Cart</a>
@@ -29,10 +29,11 @@
                 <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="query">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
-            {% if session.get('user') %}
+            {% if session.get('username') %}
                 <a class="btn btn-outline-danger ml-2" href="{{ url_for('logout') }}">Logout</a>
             {% else %}
                 <a class="btn btn-outline-primary ml-2" href="{{ url_for('login') }}">Login</a>
+                <a class="btn btn-outline-secondary ml-2" href="{{ url_for('register') }}">Register</a>
             {% endif %}
         </div>
     </nav>
