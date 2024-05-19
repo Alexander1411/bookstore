@@ -26,4 +26,23 @@
                 </li>
             </ul>
             <form class="form-inline my-2 my-lg-0" action="{{ url_for('books_page') }}" method="GET">
-                <input class="form-control mr-sm-2" type="search" placeholder
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="query">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+            {% if session.get('user') %}
+                <a class="btn btn-outline-danger ml-2" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a class="btn btn-outline-primary ml-2" href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="container">
+        <h1>Cart</h1>
+        <p>Items in the cart will be displayed here.</p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
