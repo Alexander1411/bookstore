@@ -10,5 +10,9 @@ def hello():
 def home():
     return render_template('home.html')
 
+@app.route("/shop")
+def shop():
+    return render_template("shop.html")
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
