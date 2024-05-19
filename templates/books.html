@@ -42,9 +42,12 @@
             {% for book in books %}
                 <div class="col-md-4">
                     <div class="card mb-4">
+                        <img class="card-img-top" src="{{ book.image_url }}" alt="{{ book.title }}">
                         <div class="card-body">
                             <h5 class="card-title">{{ book.title }}</h5>
                             <p class="card-text">Author: {{ book.author }}</p>
+                            <p class="card-text">Price: €{{ book.price }}</p>
+                            <a href="{{ url_for('add_to_cart', book_id=book.id) }}" class="btn btn-primary">Add to Cart</a>
                         </div>
                     </div>
                 </div>
