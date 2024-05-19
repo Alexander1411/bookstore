@@ -36,11 +36,6 @@ def books_page():
         filtered_books = books
     return render_template('books.html', books=filtered_books)
 
-@app.route('/cart')
-def cart():
-    cart_books = [book for book in books if book['id'] in session.get('cart', [])]
-    return render_template('cart.html', books=cart_books)
-
 @app.route('/add_to_cart/<int:book_id>')
 def add_to_cart(book_id):
     if 'user' in session:
@@ -48,6 +43,11 @@ def add_to_cart(book_id):
             session['cart'] = []
         session['cart'].append(book_id)
     return redirect(url_for('cart'))
+
+@app.route('/cart')
+def cart():
+    cart_books = [book for book in books if book['id'] in session.get('cart', [])]
+    return render_template('cart.html', books=cart_books)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
