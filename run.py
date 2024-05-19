@@ -7,6 +7,7 @@ def hello(): # Name of the method
  return "<h1>Hello World but bigger</h1>!" #indent this line
 
 @app.route("/")
+@app.route('/home')
 def home():
     return render_template(home.html)
  
