@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from flask_mysqldb import MySQL # Corrected import statement
+from flask_mysqldb import MySQL
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -34,8 +34,12 @@ def login():
         username = request.form['username']
         pwd = request.form['password']
         cur = mysql.connection.cursor()
-        cur.execute(f"SELECT username, password FROM tbl_users WHERE username = '{username}'")
-        user = cur.fetchone()
+        try:
+            cur.execute("SELECT username, password FROM tbl_users WHERE username = %s", (username,))
+            user = cur.fetchone()
+        except Exception as e:
+            cur.close()
+            return render_template("login.html", error="An error occurred: " + str(e))
         cur.close()
         if user and pwd == user[1]:
             session["username"] = user[0]
@@ -50,8 +54,12 @@ def register():
         username = request.form['username']
         pwd = request.form['password']
         cur = mysql.connection.cursor()
-        cur.execute(f"INSERT INTO tbl_users (username, password) VALUES ('{username}', '{pwd}')")
-        mysql.connection.commit()
+        try:
+            cur.execute("INSERT INTO tbl_users (username, password) VALUES (%s, %s)", (username, pwd))
+            mysql.connection.commit()
+        except Exception as e:
+            cur.close()
+            return render_template("register.html", error="An error occurred: " + str(e))
         cur.close()
         return redirect(url_for('login'))
     return render_template('register.html')
