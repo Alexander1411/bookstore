@@ -48,11 +48,15 @@
                                 <h5 class="card-title">{{ book.title }}</h5>
                                 <p class="card-text">Author: {{ book.author }}</p>
                                 <p class="card-text">Price: €{{ book.price }}</p>
+                                <p class="card-text">Quantity: {{ quantities[book.id] }}</p>
+                                <a href="{{ url_for('add_to_cart', book_id=book.id) }}" class="btn btn-primary">Add One More</a>
+                                <a href="{{ url_for('remove_from_cart', book_id=book.id) }}" class="btn btn-danger">Remove One</a>
                             </div>
                         </div>
                     </div>
                 {% endfor %}
             </div>
+            <a href="{{ url_for('clear_cart') }}" class="btn btn-warning">Clear Cart</a>
         {% else %}
             <p>Your cart is empty.</p>
         {% endif %}
