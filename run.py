@@ -6,7 +6,7 @@ app = Flask(__name__)
 def hello(): # Name of the method
  return "<h1>Hello World but bigger</h1>!" #indent this line
 
-@app.route("/")
+@app.route("/home")
 def home_page():
     return render_template(home.html)
  
