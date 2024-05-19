@@ -4,12 +4,12 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
 books = [
-    {"id": 1, "title": "Book One", "author": "Author One"},
-    {"id": 2, "title": "Book Two", "author": "Author Two"},
-    {"id": 3, "title": "Book Three", "author": "Author Three"},
-    {"id": 4, "title": "Book Four", "author": "Author Four"},
-    {"id": 5, "title": "Book Five", "author": "Author Five"},
-    {"id": 6, "title": "Book Six", "author": "Author Six"}
+    {"id": 1, "title": "The Body Keeps the Score: Brain, Mind, and Body in the Healing of Trauma", "author": "Bessel van der Kolk", "price": 12.38},
+    {"id": 2, "title": "The Myth of Normal: Illness, Health & Healing in a Toxic Culture", "author": "Gabor Maté with Daniel Maté", "price": 6.42},
+    {"id": 3, "title": "Scattered Minds: The Origins and Healing of Attention Deficit Disorder", "author": "Dr. Gabor Maté", "price": 11.68},
+    {"id": 4, "title": "ADHD 2.0: New Science and Essential Strategies for Thriving with Distraction", "author": "Edward M. Hallowell, John J. Ratey", "price": 11.68},
+    {"id": 5, "title": "Grit: Why Passion and Resilience are the Secrets to Success", "author": "Angela Duckworth", "price": 11.68},
+    {"id": 6, "title": "Quit: The Power of Knowing When to Walk Away", "author": "Annie Duke", "price": 11.49}
 ]
 
 @app.route('/')
@@ -38,6 +38,6 @@ def books_page():
 @app.route('/cart')
 def cart():
     return render_template('cart.html')
-    
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
