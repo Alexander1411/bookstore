@@ -135,17 +135,22 @@ def clear_cart():
 def cart():
     if 'username' not in session:
         return redirect(url_for('login'))
+    
     cart_books = []
     cart_quantities = {}
+    total_price = 0
     if 'cart' in session:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         for book_id in session['cart']:
             cur.execute("SELECT * FROM books WHERE id = %s", (int(book_id),))  # Convert book_id back to int for querying
             book = cur.fetchone()
             cart_books.append(book)
-            cart_quantities[int(book_id)] = session['cart'][book_id]
+            cart_quantities[int(book_id)] = session['cart'][book_id]  # Convert back to int for consistency
+            total_price += book['price'] * session['cart'][book_id]  # Calculate total price
         cur.close()
-    return render_template('cart.html', books=cart_books, quantities=cart_quantities)
+    
+    return render_template('cart.html', books=cart_books, quantities=cart_quantities, total_price=total_price)
+
 
 @app.route('/admin/inventory')
 def admin_inventory():
