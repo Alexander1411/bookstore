@@ -22,6 +22,7 @@
             </li>
         {% endfor %}
     </ul>
+    <h3>Total Price: €{{ total_price }}</h3>
     <a href="{{ url_for('clear_cart') }}" class="btn btn-danger">Clear Cart</a>
 {% else %}
     <p>Your cart is empty.</p>
