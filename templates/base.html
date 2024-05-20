@@ -24,6 +24,11 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('cart') }}">Cart</a>
                 </li>
+                {% if session.get('username') == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_inventory') }}">Admin Inventory</a>
+                </li>
+                {% endif %}
             </ul>
             <form class="form-inline my-2 my-lg-0" action="{{ url_for('books_page') }}" method="GET">
                 <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="query">
@@ -50,7 +55,4 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</body>
-</html>
+    <script src="

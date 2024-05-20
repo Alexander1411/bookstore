@@ -69,6 +69,11 @@ def books_page():
         cur.execute("SELECT * FROM books")
     books = cur.fetchall()
     cur.close()
+    
+    for book in books:
+        if book['inventory'] < 5:
+            flash(f"Low stock alert: Only {book['inventory']} left of '{book['title']}'", 'warning')
+    
     return render_template('books.html', books=books)
 
 @app.route('/add_to_cart/<int:book_id>')
@@ -87,6 +92,7 @@ def add_to_cart(book_id):
         if 'cart' not in session:
             session['cart'] = {}
         cart = session['cart']
+        book_id = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
         if book_id in cart:
             cart[book_id] += 1
         else:
@@ -101,6 +107,7 @@ def add_to_cart(book_id):
 def remove_from_cart(book_id):
     if 'username' in session and 'cart' in session:
         cart = session['cart']
+        book_id = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
         if book_id in cart:
             cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
             cur.execute("UPDATE books SET inventory = inventory + 1 WHERE id = %s", (book_id,))
@@ -133,12 +140,22 @@ def cart():
     if 'cart' in session:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         for book_id in session['cart']:
-            cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+            cur.execute("SELECT * FROM books WHERE id = %s", (int(book_id),))  # Convert book_id back to int for querying
             book = cur.fetchone()
             cart_books.append(book)
-            cart_quantities[book_id] = session['cart'][book_id]
+            cart_quantities[int(book_id)] = session['cart'][book_id]
         cur.close()
     return render_template('cart.html', books=cart_books, quantities=cart_quantities)
+
+@app.route('/admin/inventory')
+def admin_inventory():
+    if 'username' in session and session['username'] == 'admin':  # Only allow admin to access this page
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT * FROM books")
+        books = cur.fetchall()
+        cur.close()
+        return render_template('admin_inventory.html', books=books)
+    return redirect(url_for('login'))
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True)

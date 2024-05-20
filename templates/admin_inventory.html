@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Admin Inventory{% endblock %}
+{% block content %}
+<h1>Admin Inventory</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Title</th>
+            <th scope="col">Author</th>
+            <th scope="col">Price</th>
+            <th scope="col">Image URL</th>
+            <th scope="col">Inventory</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for book in books %}
+        <tr>
+            <th scope="row">{{ book.id }}</th>
+            <td>{{ book.title }}</td>
+            <td>{{ book.author }}</td>
+            <td>€{{ book.price }}</td>
+            <td>{{ book.image_url }}</td>
+            <td>{{ book.inventory }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
