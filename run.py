@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from flask_mysqldb import MySQL
+from flask_mysqldb import MySQL, MySQLdb
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -40,7 +40,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
+    if request.method == 'POST']:
         username = request.form['username']
         pwd = request.form['password']
         cur = mysql.connection.cursor()
@@ -62,7 +62,7 @@ def logout():
 @app.route('/books')
 def books_page():
     query = request.args.get('query')
-    cur = mysql.connection.cursor()
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     if query:
         cur.execute("SELECT * FROM books WHERE title LIKE %s", ('%' + query + '%',))
     else:
@@ -74,9 +74,9 @@ def books_page():
 @app.route('/add_to_cart/<int:book_id>')
 def add_to_cart(book_id):
     if 'username' in session:
-        cur = mysql.connection.cursor()
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))
-        inventory = cur.fetchone()[0]
+        inventory = cur.fetchone()['inventory']
         if inventory < 1:
             flash('This book is out of stock.', 'danger')
             return redirect(url_for('books_page'))
@@ -102,7 +102,7 @@ def remove_from_cart(book_id):
     if 'username' in session and 'cart' in session:
         cart = session['cart']
         if book_id in cart:
-            cur = mysql.connection.cursor()
+            cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
             cur.execute("UPDATE books SET inventory = inventory + 1 WHERE id = %s", (book_id,))
             mysql.connection.commit()
             cur.close()
@@ -117,7 +117,7 @@ def remove_from_cart(book_id):
 def clear_cart():
     if 'username' in session:
         cart = session.pop('cart', {})
-        cur = mysql.connection.cursor()
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         for book_id, quantity in cart.items():
             cur.execute("UPDATE books SET inventory = inventory + %s WHERE id = %s", (quantity, book_id))
         mysql.connection.commit()
@@ -131,7 +131,7 @@ def cart():
     cart_books = []
     cart_quantities = {}
     if 'cart' in session:
-        cur = mysql.connection.cursor()
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         for book_id in session['cart']:
             cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
             book = cur.fetchone()
