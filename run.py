@@ -23,7 +23,7 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         pwd = request.form['password']
-        cur = mysql.connection.cursor()
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         try:
             cur.execute("SELECT username, password FROM tbl_users WHERE username = %s", (username,))
             user = cur.fetchone()
@@ -31,8 +31,8 @@ def login():
             cur.close()
             return render_template("login.html", error="An error occurred: " + str(e))
         cur.close()
-        if user and pwd == user[1]:
-            session["username"] = user[0]
+        if user and pwd == user['password']:
+            session["username"] = user['username']
             return redirect(url_for("books_page"))
         else:
             return render_template("login.html", error="Invalid username or password")
@@ -40,10 +40,10 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST']:
+    if request.method == 'POST':
         username = request.form['username']
         pwd = request.form['password']
-        cur = mysql.connection.cursor()
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         try:
             cur.execute("INSERT INTO tbl_users (username, password) VALUES (%s, %s)", (username, pwd))
             mysql.connection.commit()
