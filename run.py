@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 
@@ -7,23 +7,12 @@ CORS(app)
 app.secret_key = 'supersecretkey'
 
 # MySQL Configuration
-app.config["MYSQL_HOST"] = "10.0.0.4" #my vm ip
+app.config["MYSQL_HOST"] = "10.0.0.4"  # my VM IP
 app.config["MYSQL_USER"] = "remote_user"
 app.config["MYSQL_PASSWORD"] = "alexander"
 app.config["MYSQL_DB"] = "bookstore_users"
 
-
 mysql = MySQL(app)
-
-# Sample books data
-books = [
-    {"id": 1, "title": "The Body Keeps the Score: Brain, Mind, and Body in the Healing of Trauma", "author": "Bessel van der Kolk", "price": 12.38, "image_url": "/static/static/images/the-body-keeps-the-score.jpg"},
-    {"id": 2, "title": "The Myth of Normal: Illness, Health & Healing in a Toxic Culture", "author": "Gabor Maté with Daniel Maté", "price": 6.42, "image_url": "/static/static/images/the-myth-of-normal.jpg"},
-    {"id": 3, "title": "Scattered Minds: The Origins and Healing of Attention Deficit Disorder", "author": "Dr. Gabor Maté", "price": 11.68, "image_url": "/static/static/images/scattered-minds.jpg"},
-    {"id": 4, "title": "ADHD 2.0: New Science and Essential Strategies for Thriving with Distraction", "author": "Edward M. Hallowell, John J. Ratey", "price": 11.68, "image_url": "/static/static/images/adhd-2.jpg"},
-    {"id": 5, "title": "Grit: Why Passion and Resilience are the Secrets to Success", "author": "Angela Duckworth", "price": 11.68, "image_url": "/static/static/images/grit.jpg"},
-    {"id": 6, "title": "Quit: The Power of Knowing When to Walk Away", "author": "Annie Duke", "price": 11.49, "image_url": "/static/static/images/quit.jpg"}
-]
 
 @app.route("/")
 def home():
@@ -44,7 +33,7 @@ def login():
         cur.close()
         if user and pwd == user[1]:
             session["username"] = user[0]
-            return redirect(url_for("home"))
+            return redirect(url_for("books_page"))
         else:
             return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
@@ -73,15 +62,28 @@ def logout():
 @app.route('/books')
 def books_page():
     query = request.args.get('query')
+    cur = mysql.connection.cursor()
     if query:
-        filtered_books = [book for book in books if query.lower() in book['title'].lower()]
+        cur.execute("SELECT * FROM books WHERE title LIKE %s", ('%' + query + '%',))
     else:
-        filtered_books = books
-    return render_template('books.html', books=filtered_books)
+        cur.execute("SELECT * FROM books")
+    books = cur.fetchall()
+    cur.close()
+    return render_template('books.html', books=books)
 
 @app.route('/add_to_cart/<int:book_id>')
 def add_to_cart(book_id):
     if 'username' in session:
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))
+        inventory = cur.fetchone()[0]
+        if inventory < 1:
+            flash('This book is out of stock.', 'danger')
+            return redirect(url_for('books_page'))
+        cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
+        mysql.connection.commit()
+        cur.close()
+        
         if 'cart' not in session:
             session['cart'] = {}
         cart = session['cart']
@@ -90,6 +92,9 @@ def add_to_cart(book_id):
         else:
             cart[book_id] = 1
         session['cart'] = cart
+        
+        if inventory <= 5:
+            flash(f'Stock is low for this book. Only {inventory - 1} left.', 'warning')
     return redirect(url_for('cart'))
 
 @app.route('/remove_from_cart/<int:book_id>')
@@ -97,6 +102,10 @@ def remove_from_cart(book_id):
     if 'username' in session and 'cart' in session:
         cart = session['cart']
         if book_id in cart:
+            cur = mysql.connection.cursor()
+            cur.execute("UPDATE books SET inventory = inventory + 1 WHERE id = %s", (book_id,))
+            mysql.connection.commit()
+            cur.close()
             if cart[book_id] > 1:
                 cart[book_id] -= 1
             else:
@@ -107,13 +116,28 @@ def remove_from_cart(book_id):
 @app.route('/clear_cart')
 def clear_cart():
     if 'username' in session:
-        session.pop('cart', None)
+        cart = session.pop('cart', {})
+        cur = mysql.connection.cursor()
+        for book_id, quantity in cart.items():
+            cur.execute("UPDATE books SET inventory = inventory + %s WHERE id = %s", (quantity, book_id))
+        mysql.connection.commit()
+        cur.close()
     return redirect(url_for('cart'))
 
 @app.route('/cart')
 def cart():
-    cart_books = [book for book in books if book['id'] in session.get('cart', {})]
-    cart_quantities = {book_id: session['cart'][book_id] for book_id in session.get('cart', {})}
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    cart_books = []
+    cart_quantities = {}
+    if 'cart' in session:
+        cur = mysql.connection.cursor()
+        for book_id in session['cart']:
+            cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+            book = cur.fetchone()
+            cart_books.append(book)
+            cart_quantities[book_id] = session['cart'][book_id]
+        cur.close()
     return render_template('cart.html', books=cart_books, quantities=cart_quantities)
 
 if __name__ == "__main__":
