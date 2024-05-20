@@ -11,6 +11,9 @@
                     <p>Author: {{ book.author }}</p>
                     <p>Price: €{{ book.price }}</p>
                     <p>Quantity: {{ quantities[book.id] }}</p>
+                    {% if book.inventory < 5 %}
+                        <p class="text-danger">Low stock: Only {{ book.inventory }} left!</p>
+                    {% endif %}
                 </div>
                 <div>
                     <a href="{{ url_for('add_to_cart', book_id=book.id) }}" class="btn btn-sm btn-success">+</a>
