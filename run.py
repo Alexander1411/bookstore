@@ -214,8 +214,9 @@ def admin_inventory():
         return render_template('admin_inventory.html', books=books)
     return redirect(url_for('login'))
 
+# Route to edit the user's profile
 @app.route('/edit_profile', methods=['GET', 'POST'])
-def edit_profile():
+def edit_user_profile():  # Change function name from 'edit_profile' to 'edit_user_profile'
     if 'username' not in session:
         return redirect(url_for('login'))
     
@@ -231,7 +232,7 @@ def edit_profile():
         cur.close()
         
         flash('Profile updated successfully', 'success')
-        return redirect(url_for('profile'))
+        return redirect(url_for('user_profile'))  # Updated to reflect the new function name
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
@@ -239,7 +240,6 @@ def edit_profile():
     cur.close()
     
     return render_template('edit_profile.html', user=user)
-
     
     return render_template('edit_profile.html', user=user)
 
