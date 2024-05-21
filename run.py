@@ -20,7 +20,7 @@ def home():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
+    if request.method == 'POST':  # Corrected here
         username = request.form['username']
         pwd = request.form['password']
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -41,7 +41,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST']:
+    if request.method == 'POST':  # Corrected here
         username = request.form['username']
         pwd = request.form['password']
         email = request.form['email']
