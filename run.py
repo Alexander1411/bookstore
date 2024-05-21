@@ -41,15 +41,21 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':  # Corrected here
+    if request.method == 'POST':
         username = request.form['username']
         pwd = request.form['password']
         email = request.form['email']
         name = request.form['name']
         address = request.form['address']
+        
+        if not username or not pwd or not email or not name or not address:
+            flash('All fields are required!', 'danger')
+            return redirect(url_for('register'))
+        
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         try:
-            cur.execute("INSERT INTO tbl_users (username, password, email, name, address) VALUES (%s, %s, %s, %s, %s)", (username, pwd, email, name, address))
+            cur.execute("INSERT INTO tbl_users (username, password, email, name, address) VALUES (%s, %s, %s, %s, %s)", 
+                        (username, pwd, email, name, address))
             mysql.connection.commit()
         except Exception as e:
             cur.close()
@@ -205,7 +211,8 @@ def edit_profile():
         address = request.form['address']
         
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("UPDATE tbl_users SET email = %s, name = %s, address = %s WHERE id = %s", (email, name, address, session['user_id']))
+        cur.execute("UPDATE tbl_users SET email = %s, name = %s, address = %s WHERE id = %s", 
+                    (email, name, address, session['user_id']))
         mysql.connection.commit()
         cur.close()
         
@@ -216,6 +223,9 @@ def edit_profile():
     cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
     user = cur.fetchone()
     cur.close()
+    
+    return render_template('edit_profile.html', user=user)
+
     
     return render_template('edit_profile.html', user=user)
 
