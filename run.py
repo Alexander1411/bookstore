@@ -70,9 +70,8 @@ def logout():
     session.pop('user_id', None)
     return redirect(url_for('home'))
 
-# Route to display the user's profile
 @app.route('/profile')
-def user_profile():  # Changed function namefrom 'profile to 'user_profile'
+def profile():
     if 'username' not in session:
         return redirect(url_for('login'))
     
@@ -109,43 +108,29 @@ def books_page():
 def add_to_cart(book_id):
     if 'username' in session:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Check current inventory
         cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))
         inventory = cur.fetchone()['inventory']
         if inventory < 1:
             flash('This book is out of stock.', 'danger')
             return redirect(url_for('books_page'))
-        
-        # Update book inventory
         cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
         mysql.connection.commit()
-
-        # Update session cart
+        
         if 'cart' not in session:
             session['cart'] = {}
         cart = session['cart']
-        book_id_str = str(book_id)  # Convert book_id to string for session storage
+        book_id_str = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
         if book_id_str in cart:
             cart[book_id_str] += 1
         else:
             cart[book_id_str] = 1
         session['cart'] = cart
         
-        # Flash low stock warning if applicable
         if inventory <= 5:
             flash(f'Stock is low for this book. Only {inventory - 1} left.', 'warning')
         
-        # Check if an order already exists for this user and book
-        cur.execute("SELECT * FROM orders WHERE user_id = %s AND book_id = %s", (session['user_id'], book_id))
-        existing_order = cur.fetchone()
-        if existing_order:
-            # Update the quantity if the order already exists
-            cur.execute("UPDATE orders SET quantity = quantity + 1 WHERE order_id = %s", (existing_order['order_id'],))
-        else:
-            # Insert a new order if it doesn't exist
-            cur.execute("INSERT INTO orders (user_id, book_id, quantity) VALUES (%s, %s, %s)", 
-                        (session['user_id'], book_id, 1))
+        # Add to order history
+        cur.execute("INSERT INTO orders (user_id, book_id, quantity) VALUES (%s, %s, %s)", (session['user_id'], book_id, 1))
         mysql.connection.commit()
         cur.close()
     return redirect(url_for('cart'))
@@ -178,9 +163,10 @@ def clear_cart():
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         for book_id, quantity in cart.items():
             cur.execute("UPDATE books SET inventory = inventory + %s WHERE id = %s", (quantity, book_id))
-            # Clear order history for this user and book
+            mysql.connection.commit()
+            # Clear order history
             cur.execute("DELETE FROM orders WHERE user_id = %s AND book_id = %s", (session['user_id'], book_id))
-        mysql.connection.commit()
+            mysql.connection.commit()
         cur.close()
     return redirect(url_for('cart'))
 
@@ -214,9 +200,8 @@ def admin_inventory():
         return render_template('admin_inventory.html', books=books)
     return redirect(url_for('login'))
 
-# Route to edit the user's profile
 @app.route('/edit_profile', methods=['GET', 'POST'])
-def edit_user_profile():  # Change function name from 'edit_profile' to 'edit_user_profile'
+def edit_profile():
     if 'username' not in session:
         return redirect(url_for('login'))
     
@@ -232,7 +217,7 @@ def edit_user_profile():  # Change function name from 'edit_profile' to 'edit_us
         cur.close()
         
         flash('Profile updated successfully', 'success')
-        return redirect(url_for('user_profile'))  # Updated to reflect the new function name
+        return redirect(url_for('profile'))
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
@@ -240,6 +225,7 @@ def edit_user_profile():  # Change function name from 'edit_profile' to 'edit_us
     cur.close()
     
     return render_template('edit_profile.html', user=user)
+
     
     return render_template('edit_profile.html', user=user)
 
