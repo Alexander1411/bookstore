@@ -70,8 +70,9 @@ def logout():
     session.pop('user_id', None)
     return redirect(url_for('home'))
 
+# Route to display the user's profile
 @app.route('/profile')
-def profile():
+def user_profile():  # Changed function namefrom 'profile to 'user_profile'
     if 'username' not in session:
         return redirect(url_for('login'))
     
