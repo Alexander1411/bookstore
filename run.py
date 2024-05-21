@@ -108,29 +108,43 @@ def books_page():
 def add_to_cart(book_id):
     if 'username' in session:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Check current inventory
         cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))
         inventory = cur.fetchone()['inventory']
         if inventory < 1:
             flash('This book is out of stock.', 'danger')
             return redirect(url_for('books_page'))
+        
+        # Update book inventory
         cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
         mysql.connection.commit()
-        
+
+        # Update session cart
         if 'cart' not in session:
             session['cart'] = {}
         cart = session['cart']
-        book_id_str = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
+        book_id_str = str(book_id)  # Convert book_id to string for session storage
         if book_id_str in cart:
             cart[book_id_str] += 1
         else:
             cart[book_id_str] = 1
         session['cart'] = cart
         
+        # Flash low stock warning if applicable
         if inventory <= 5:
             flash(f'Stock is low for this book. Only {inventory - 1} left.', 'warning')
         
-        # Add to order history
-        cur.execute("INSERT INTO orders (user_id, book_id, quantity) VALUES (%s, %s, %s)", (session['user_id'], book_id, 1))
+        # Check if an order already exists for this user and book
+        cur.execute("SELECT * FROM orders WHERE user_id = %s AND book_id = %s", (session['user_id'], book_id))
+        existing_order = cur.fetchone()
+        if existing_order:
+            # Update the quantity if the order already exists
+            cur.execute("UPDATE orders SET quantity = quantity + 1 WHERE order_id = %s", (existing_order['order_id'],))
+        else:
+            # Insert a new order if it doesn't exist
+            cur.execute("INSERT INTO orders (user_id, book_id, quantity) VALUES (%s, %s, %s)", 
+                        (session['user_id'], book_id, 1))
         mysql.connection.commit()
         cur.close()
     return redirect(url_for('cart'))
