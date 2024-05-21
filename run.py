@@ -194,5 +194,30 @@ def admin_inventory():
         return render_template('admin_inventory.html', books=books)
     return redirect(url_for('login'))
 
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        email = request.form['email']
+        name = request.form['name']
+        address = request.form['address']
+        
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("UPDATE tbl_users SET email = %s, name = %s, address = %s WHERE id = %s", (email, name, address, session['user_id']))
+        mysql.connection.commit()
+        cur.close()
+        
+        flash('Profile updated successfully', 'success')
+        return redirect(url_for('profile'))
+    
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
+    user = cur.fetchone()
+    cur.close()
+    
+    return render_template('edit_profile.html', user=user)
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True)
