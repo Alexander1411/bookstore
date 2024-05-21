@@ -25,7 +25,7 @@ def login():
         pwd = request.form['password']
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         try:
-            cur.execute("SELECT username, password FROM tbl_users WHERE username = %s", (username,))
+            cur.execute("SELECT * FROM tbl_users WHERE username = %s", (username,))
             user = cur.fetchone()
         except Exception as e:
             cur.close()
@@ -33,19 +33,23 @@ def login():
         cur.close()
         if user and pwd == user['password']:
             session["username"] = user['username']
-            return redirect(url_for("books_page"))
+            session["user_id"] = user['id']
+            return redirect(url_for("profile"))
         else:
             return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
+    if request.method == 'POST']:
         username = request.form['username']
         pwd = request.form['password']
+        email = request.form['email']
+        name = request.form['name']
+        address = request.form['address']
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         try:
-            cur.execute("INSERT INTO tbl_users (username, password) VALUES (%s, %s)", (username, pwd))
+            cur.execute("INSERT INTO tbl_users (username, password, email, name, address) VALUES (%s, %s, %s, %s, %s)", (username, pwd, email, name, address))
             mysql.connection.commit()
         except Exception as e:
             cur.close()
@@ -57,7 +61,25 @@ def register():
 @app.route('/logout')
 def logout():
     session.pop('username', None)
+    session.pop('user_id', None)
     return redirect(url_for('home'))
+
+@app.route('/profile')
+def profile():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
+    user = cur.fetchone()
+    cur.close()
+    
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT o.*, b.title FROM orders o JOIN books b ON o.book_id = b.id WHERE o.user_id = %s", (session['user_id'],))
+    orders = cur.fetchall()
+    cur.close()
+    
+    return render_template('profile.html', user=user, orders=orders)
 
 @app.route('/books')
 def books_page():
@@ -87,37 +109,45 @@ def add_to_cart(book_id):
             return redirect(url_for('books_page'))
         cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
         mysql.connection.commit()
-        cur.close()
         
         if 'cart' not in session:
             session['cart'] = {}
         cart = session['cart']
-        book_id = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
-        if book_id in cart:
-            cart[book_id] += 1
+        book_id_str = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
+        if book_id_str in cart:
+            cart[book_id_str] += 1
         else:
-            cart[book_id] = 1
+            cart[book_id_str] = 1
         session['cart'] = cart
         
         if inventory <= 5:
             flash(f'Stock is low for this book. Only {inventory - 1} left.', 'warning')
+        
+        # Add to order history
+        cur.execute("INSERT INTO orders (user_id, book_id, quantity) VALUES (%s, %s, %s)", (session['user_id'], book_id, 1))
+        mysql.connection.commit()
+        cur.close()
     return redirect(url_for('cart'))
 
 @app.route('/remove_from_cart/<int:book_id>')
 def remove_from_cart(book_id):
     if 'username' in session and 'cart' in session:
         cart = session['cart']
-        book_id = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
-        if book_id in cart:
+        book_id_str = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
+        if book_id_str in cart:
             cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
             cur.execute("UPDATE books SET inventory = inventory + 1 WHERE id = %s", (book_id,))
             mysql.connection.commit()
-            cur.close()
-            if cart[book_id] > 1:
-                cart[book_id] -= 1
+            if cart[book_id_str] > 1:
+                cart[book_id_str] -= 1
             else:
-                del cart[book_id]
-        session['cart'] = cart
+                del cart[book_id_str]
+            session['cart'] = cart
+            
+            # Remove from order history
+            cur.execute("DELETE FROM orders WHERE user_id = %s AND book_id = %s ORDER BY order_date DESC LIMIT 1", (session['user_id'], book_id))
+            mysql.connection.commit()
+            cur.close()
     return redirect(url_for('cart'))
 
 @app.route('/clear_cart')
@@ -127,7 +157,10 @@ def clear_cart():
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         for book_id, quantity in cart.items():
             cur.execute("UPDATE books SET inventory = inventory + %s WHERE id = %s", (quantity, book_id))
-        mysql.connection.commit()
+            mysql.connection.commit()
+            # Clear order history
+            cur.execute("DELETE FROM orders WHERE user_id = %s AND book_id = %s", (session['user_id'], book_id))
+            mysql.connection.commit()
         cur.close()
     return redirect(url_for('cart'))
 
@@ -150,7 +183,6 @@ def cart():
         cur.close()
     
     return render_template('cart.html', books=cart_books, quantities=cart_quantities, total_price=total_price)
-
 
 @app.route('/admin/inventory')
 def admin_inventory():
