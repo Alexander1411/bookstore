@@ -177,10 +177,9 @@ def clear_cart():
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         for book_id, quantity in cart.items():
             cur.execute("UPDATE books SET inventory = inventory + %s WHERE id = %s", (quantity, book_id))
-            mysql.connection.commit()
-            # Clear order history
+            # Clear order history for this user and book
             cur.execute("DELETE FROM orders WHERE user_id = %s AND book_id = %s", (session['user_id'], book_id))
-            mysql.connection.commit()
+        mysql.connection.commit()
         cur.close()
     return redirect(url_for('cart'))
 
