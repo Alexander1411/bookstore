@@ -195,7 +195,7 @@ def admin_inventory():
         return render_template('admin_inventory.html', books=books)
     return redirect(url_for('login'))
 
-@app.route('/edit_profile', methods=['GET', 'POST'])
+@app.route('/edit_profile', methods=['GET', 'POST'])  # Added route for editing profile
 def edit_profile():
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -207,7 +207,7 @@ def edit_profile():
         
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cur.execute("UPDATE tbl_users SET email = %s, name = %s, address = %s WHERE id = %s", 
-                    (email, name, address, session['user_id']))
+                    (email, name, address, session['user_id']))  # Update user details
         mysql.connection.commit()
         cur.close()
         
@@ -215,14 +215,11 @@ def edit_profile():
         return redirect(url_for('profile'))
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
+    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))  # Fetch user details
     user = cur.fetchone()
     cur.close()
     
-    return render_template('edit_profile.html', user=user)
-
-    
-    return render_template('edit_profile.html', user=user)
+    return render_template('edit_profile.html', user=user)  # Render edit profile template
 
 @app.route('/balance')
 def view_balance():
