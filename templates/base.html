@@ -29,10 +29,7 @@
                         <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('view_balance') }}">Balance</a> <!-- Added link to view balance -->
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('add_funds') }}">Add Funds</a> <!-- Added link to add funds -->
+                        <a class="nav-link" href="{{ url_for('add_funds') }}">Add Funds</a>
                     </li>
                 {% endif %}
                 {% if session.get('username') == 'admin' %}
