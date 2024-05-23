@@ -76,21 +76,14 @@ def user_profile():
         return redirect(url_for('login'))
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT * FROM tbl_users WHERE username = %s", (session['username'],))
+    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
     user = cur.fetchone()
-
-    # Fetch the user's order history
-    cur.execute("""
-        SELECT books.title, books.author, books.price, orders.quantity, orders.order_date
-        FROM orders
-        JOIN books ON orders.book_id = books.id
-        WHERE orders.user_id = %s
-        ORDER BY orders.order_date DESC
-    """, (user['id'],))
-    orders = cur.fetchall()
     
+    # Fetch user orders
+    cur.execute("SELECT o.id, b.title, o.quantity, o.order_date FROM orders o JOIN books b ON o.book_id = b.id WHERE o.user_id = %s", (session['user_id'],))
+    orders = cur.fetchall()
     cur.close()
-
+    
     return render_template('profile.html', user=user, orders=orders)
 
 @app.route('/books')
