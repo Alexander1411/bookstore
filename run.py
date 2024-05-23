@@ -241,5 +241,26 @@ def view_balance():
     
     return render_template('balance.html', balance=user['balance'])
 
+@app.route('/add_funds', methods=['GET', 'POST'])
+def add_funds():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        amount = float(request.form['amount'])
+        if amount <= 0:
+            flash('Invalid amount', 'danger')
+            return redirect(url_for('add_funds'))
+        
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("UPDATE tbl_users SET balance = balance + %s WHERE id = %s", (amount, session['user_id']))
+        mysql.connection.commit()
+        cur.close()
+        
+        flash(f'Funds added successfully! Your new balance is {amount}', 'success')
+        return redirect(url_for('view_balance'))
+    
+    return render_template('add_funds.html')
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True)
