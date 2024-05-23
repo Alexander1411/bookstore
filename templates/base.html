@@ -26,7 +26,10 @@
                 </li>
                 {% if session.get('username') %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
+                        <a class="nav-link" href="{{ url_for('user_profile') }}">Profile</a> <!-- Link to user profile -->
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('add_funds') }}">Add Funds</a> <!-- Link to add funds -->
                     </li>
                 {% endif %}
                 {% if session.get('username') == 'admin' %}

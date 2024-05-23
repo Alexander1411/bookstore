@@ -71,7 +71,7 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/profile')
-def profile():
+def user_profile():
     if 'username' not in session:
         return redirect(url_for('login'))
     
@@ -81,7 +81,7 @@ def profile():
     cur.close()
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT o.*, b.title FROM orders o JOIN books b ON o.book_id = b.id WHERE o.user_id = %s", (session['user_id'],))
+    cur.execute("SELECT * FROM orders WHERE user_id = %s", (session['user_id'],))
     orders = cur.fetchall()
     cur.close()
     
