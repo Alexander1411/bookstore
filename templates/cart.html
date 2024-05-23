@@ -26,10 +26,7 @@
                 </li>
                 {% if session.get('username') %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('add_funds') }}">Add Funds</a> <!-- Add Funds link for logged-in users -->
+                        <a class="nav-link" href="{{ url_for('user_profile') }}">Profile</a> <!-- Changed to 'user_profile' -->
                     </li>
                 {% endif %}
                 {% if session.get('username') == 'admin' %}
@@ -50,7 +47,16 @@
             {% endif %}
         </div>
     </nav>
+    
     <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
         <h1>Cart</h1>
         {% if books %}
             <ul class="list-group mb-3">
@@ -61,7 +67,7 @@
                             <p>Author: {{ book.author }}</p>
                             <p>Price: €{{ book.price }}</p>
                             <p>Quantity: {{ quantities[book.id] }}</p>
-                            {% if quantities[book.id] <= 5 %}
+                            {% if book.inventory <= 5 %}
                                 <p class="text-danger">Low stock: Only {{ book.inventory }} left!</p>
                             {% endif %}
                         </div>
@@ -73,10 +79,8 @@
                 {% endfor %}
             </ul>
             <h3>Total Price: €{{ total_price }}</h3>
-            <form action="{{ url_for('purchase') }}" method="POST">
-                <button type="submit" class="btn btn-primary">Purchase</button>
-            </form>
-            <a href="{{ url_for('clear_cart') }}" class="btn btn-danger mt-3">Clear Cart</a>
+            <a href="{{ url_for('checkout') }}" class="btn btn-primary">Checkout</a> <!-- Added Checkout button -->
+            <a href="{{ url_for('clear_cart') }}" class="btn btn-danger">Clear Cart</a>
         {% else %}
             <p>Your cart is empty.</p>
         {% endif %}
