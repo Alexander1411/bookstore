@@ -254,5 +254,50 @@ def add_funds():
     
     return render_template('add_funds.html')
 
+# Route to purchase books in the cart
+@app.route('/purchase', methods=['POST'])
+def purchase():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+
+    # Calculate total price of the cart
+    total_price = 0
+    cart = session.get('cart', {})
+    for book_id, quantity in cart.items():
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT price, inventory FROM books WHERE id = %s", (book_id,))
+        book = cur.fetchone()
+        cur.close()
+        total_price += book['price'] * quantity
+
+        # Check if inventory is sufficient
+        if book['inventory'] < quantity:
+            flash(f"Not enough stock for {book_id}. Only {book['inventory']} left.", 'danger')
+            return redirect(url_for('cart'))
+
+    # Check if user has sufficient balance
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (user_id,))
+    user = cur.fetchone()
+    cur.close()
+    if user['balance'] < total_price:
+        flash("Insufficient balance. Please add more funds.", 'danger')
+        return redirect(url_for('balance'))
+
+    # Deduct the total price from user balance and update book inventory
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE tbl_users SET balance = balance - %s WHERE id = %s", (total_price, user_id))
+    for book_id, quantity in cart.items():
+        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
+    mysql.connection.commit()
+    cur.close()
+
+    # Clear the cart
+    session.pop('cart', None)
+    flash("Purchase successful!", 'success')
+    return redirect(url_for('cart'))
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True)
