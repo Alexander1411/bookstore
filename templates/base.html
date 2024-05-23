@@ -25,14 +25,17 @@
                     <a class="nav-link" href="{{ url_for('cart') }}">Cart</a>
                 </li>
                 {% if session.get('username') %}
+                    <!-- Profile link visible to logged-in users -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('profile') }}">Profile</a>
+                        <a class="nav-link" href="{{ url_for('user_profile') }}">Profile</a> <!-- Updated profile link -->
                     </li>
+                    <!-- Add Funds link visible to logged-in users -->
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('add_funds') }}">Add Funds</a> <!-- Add Funds link for logged-in users -->
                     </li>
                 {% endif %}
                 {% if session.get('username') == 'admin' %}
+                    <!-- Admin Inventory link visible to admin users -->
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin_inventory') }}">Admin Inventory</a>
                     </li>
@@ -43,8 +46,10 @@
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
             {% if session.get('username') %}
+                <!-- Logout button for logged-in users -->
                 <a class="btn btn-outline-danger ml-2" href="{{ url_for('logout') }}">Logout</a>
             {% else %}
+                <!-- Login and Register buttons for non-logged-in users -->
                 <a class="btn btn-outline-primary ml-2" href="{{ url_for('login') }}">Login</a>
                 <a class="btn btn-outline-secondary ml-2" href="{{ url_for('register') }}">Register</a>
             {% endif %}
