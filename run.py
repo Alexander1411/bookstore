@@ -102,32 +102,34 @@ def books_page():
 @app.route('/add_to_cart/<int:book_id>')
 def add_to_cart(book_id):
     if 'username' in session:
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))
-        inventory = cur.fetchone()['inventory']
-        if inventory < 1:
-            flash('This book is out of stock.', 'danger')
-            return redirect(url_for('books_page'))
-        cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
-        mysql.connection.commit()
-        
-        if 'cart' not in session:
-            session['cart'] = {}
-        cart = session['cart']
-        book_id_str = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
-        if book_id_str in cart:
-            cart[book_id_str] += 1
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+        book = cur.fetchone()
+        if book and book[5] > 0:  # Check if the book is in stock
+            if 'cart' not in session:
+                session['cart'] = {}
+            cart = session['cart']
+            if book_id in cart:
+                cart[book_id] += 1
+            else:
+                cart[book_id] = 1
+            session['cart'] = cart
+
+            # Deduct balance and update book inventory
+            cur.execute("UPDATE tbl_users SET balance = balance - %s WHERE username = %s", (book[3], session['username']))
+            cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
+            mysql.connection.commit()
+
+            # Record the order
+            cur.execute("INSERT INTO orders (user_id, book_id, quantity, order_date) VALUES ((SELECT id FROM tbl_users WHERE username = %s), %s, 1, NOW())", (session['username'], book_id))
+            mysql.connection.commit()
+            cur.close()
+
+            flash('Book added to cart and purchased!', 'success')
         else:
-            cart[book_id_str] = 1
-        session['cart'] = cart
-        
-        if inventory <= 5:
-            flash(f'Stock is low for this book. Only {inventory - 1} left.', 'warning')
-        
-        # Add to order history
-        cur.execute("INSERT INTO orders (user_id, book_id, quantity) VALUES (%s, %s, %s)", (session['user_id'], book_id, 1))
-        mysql.connection.commit()
-        cur.close()
+            flash('Book is out of stock!', 'danger')
+    else:
+        flash('You need to log in to purchase books', 'warning')
     return redirect(url_for('cart'))
 
 @app.route('/remove_from_cart/<int:book_id>')
