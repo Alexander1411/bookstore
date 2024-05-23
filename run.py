@@ -226,5 +226,20 @@ def edit_profile():
     
     return render_template('edit_profile.html', user=user)
 
+    
+    return render_template('edit_profile.html', user=user)
+
+@app.route('/balance')
+def view_balance():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
+    user = cur.fetchone()
+    cur.close()
+    
+    return render_template('balance.html', balance=user['balance'])
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True)
