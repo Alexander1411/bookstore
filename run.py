@@ -71,26 +71,20 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/profile')
-def user_profile():
+def profile():
     if 'username' not in session:
         return redirect(url_for('login'))
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT * FROM tbl_users WHERE username = %s", (session['username'],))
+    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
     user = cur.fetchone()
-
-    # Fetch the user's order history
-    cur.execute("""
-        SELECT books.title, books.author, books.price, orders.quantity, orders.order_date
-        FROM orders
-        JOIN books ON orders.book_id = books.id
-        WHERE orders.user_id = %s
-        ORDER BY orders.order_date DESC
-    """, (user['id'],))
-    orders = cur.fetchall()
-    
     cur.close()
-
+    
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT o.*, b.title FROM orders o JOIN books b ON o.book_id = b.id WHERE o.user_id = %s", (session['user_id'],))
+    orders = cur.fetchall()
+    cur.close()
+    
     return render_template('profile.html', user=user, orders=orders)
 
 @app.route('/books')
@@ -113,34 +107,32 @@ def books_page():
 @app.route('/add_to_cart/<int:book_id>')
 def add_to_cart(book_id):
     if 'username' in session:
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
-        book = cur.fetchone()
-        if book and book[5] > 0:  # Check if the book is in stock
-            if 'cart' not in session:
-                session['cart'] = {}
-            cart = session['cart']
-            if book_id in cart:
-                cart[book_id] += 1
-            else:
-                cart[book_id] = 1
-            session['cart'] = cart
-
-            # Deduct balance and update book inventory
-            cur.execute("UPDATE tbl_users SET balance = balance - %s WHERE username = %s", (book[3], session['username']))
-            cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
-            mysql.connection.commit()
-
-            # Record the order
-            cur.execute("INSERT INTO orders (user_id, book_id, quantity, order_date) VALUES ((SELECT id FROM tbl_users WHERE username = %s), %s, 1, NOW())", (session['username'], book_id))
-            mysql.connection.commit()
-            cur.close()
-
-            flash('Book added to cart and purchased!', 'success')
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))
+        inventory = cur.fetchone()['inventory']
+        if inventory < 1:
+            flash('This book is out of stock.', 'danger')
+            return redirect(url_for('books_page'))
+        cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
+        mysql.connection.commit()
+        
+        if 'cart' not in session:
+            session['cart'] = {}
+        cart = session['cart']
+        book_id_str = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
+        if book_id_str in cart:
+            cart[book_id_str] += 1
         else:
-            flash('Book is out of stock!', 'danger')
-    else:
-        flash('You need to log in to purchase books', 'warning')
+            cart[book_id_str] = 1
+        session['cart'] = cart
+        
+        if inventory <= 5:
+            flash(f'Stock is low for this book. Only {inventory - 1} left.', 'warning')
+        
+        # Add to order history
+        cur.execute("INSERT INTO orders (user_id, book_id, quantity) VALUES (%s, %s, %s)", (session['user_id'], book_id, 1))
+        mysql.connection.commit()
+        cur.close()
     return redirect(url_for('cart'))
 
 @app.route('/remove_from_cart/<int:book_id>')
@@ -208,7 +200,7 @@ def admin_inventory():
         return render_template('admin_inventory.html', books=books)
     return redirect(url_for('login'))
 
-@app.route('/edit_profile', methods=['GET', 'POST'])  # Added route for editing profile
+@app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -220,7 +212,7 @@ def edit_profile():
         
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cur.execute("UPDATE tbl_users SET email = %s, name = %s, address = %s WHERE id = %s", 
-                    (email, name, address, session['user_id']))  # Update user details
+                    (email, name, address, session['user_id']))
         mysql.connection.commit()
         cur.close()
         
@@ -228,89 +220,14 @@ def edit_profile():
         return redirect(url_for('profile'))
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))  # Fetch user details
+    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
     user = cur.fetchone()
     cur.close()
     
-    return render_template('edit_profile.html', user=user)  # Render edit profile template
+    return render_template('edit_profile.html', user=user)
 
-@app.route('/balance')
-def view_balance():
-    if 'username' not in session:
-        return redirect(url_for('login'))
     
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
-    user = cur.fetchone()
-    cur.close()
-    
-    return render_template('balance.html', balance=user['balance'])
-
-@app.route('/add_funds', methods=['GET', 'POST'])
-def add_funds():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    
-    if request.method == 'POST':
-        amount = float(request.form['amount'])
-        if amount <= 0:
-            flash('Invalid amount', 'danger')
-            return redirect(url_for('add_funds'))
-        
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("UPDATE tbl_users SET balance = balance + %s WHERE id = %s", (amount, session['user_id']))
-        mysql.connection.commit()
-        cur.close()
-        
-        flash(f'Funds added successfully! Your new balance is {amount}', 'success')
-        return redirect(url_for('view_balance'))
-    
-    return render_template('add_funds.html')
-
-# Route to purchase books in the cart
-@app.route('/purchase', methods=['POST'])
-def purchase():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-
-    # Calculate total price of the cart
-    total_price = 0
-    cart = session.get('cart', {})
-    for book_id, quantity in cart.items():
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT price, inventory FROM books WHERE id = %s", (book_id,))
-        book = cur.fetchone()
-        cur.close()
-        total_price += book['price'] * quantity
-
-        # Check if inventory is sufficient
-        if book['inventory'] < quantity:
-            flash(f"Not enough stock for {book_id}. Only {book['inventory']} left.", 'danger')
-            return redirect(url_for('cart'))
-
-    # Check if user has sufficient balance
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (user_id,))
-    user = cur.fetchone()
-    cur.close()
-    if user['balance'] < total_price:
-        flash("Insufficient balance. Please add more funds.", 'danger')
-        return redirect(url_for('balance'))
-
-    # Deduct the total price from user balance and update book inventory
-    cur = mysql.connection.cursor()
-    cur.execute("UPDATE tbl_users SET balance = balance - %s WHERE id = %s", (total_price, user_id))
-    for book_id, quantity in cart.items():
-        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
-    mysql.connection.commit()
-    cur.close()
-
-    # Clear the cart
-    session.pop('cart', None)
-    flash("Purchase successful!", 'success')
-    return redirect(url_for('cart'))
+    return render_template('edit_profile.html', user=user)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True)

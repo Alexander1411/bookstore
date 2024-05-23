@@ -1,7 +1,0 @@
-{% extends "base.html" %}
-{% block title %}Balance{% endblock %}
-{% block content %}
-<h1>Your Balance</h1>
-<p>Your current balance is: €{{ balance }}</p>
-<a href="{{ url_for('add_funds') }}" class="btn btn-primary">Add Funds</a>
-{% endblock %}
