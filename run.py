@@ -226,8 +226,21 @@ def edit_profile():
     
     return render_template('edit_profile.html', user=user)
 
+@app.route('/add_funds', methods=['GET', 'POST'])
+def add_funds():
+    if 'username' not in session:
+        return redirect(url_for('login'))
     
-    return render_template('edit_profile.html', user=user)
+    if request.method == 'POST':
+        amount = float(request.form['amount'])
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE tbl_users SET balance = balance + %s WHERE id = %s", (amount, session['user_id']))
+        mysql.connection.commit()
+        cur.close()
+        flash('Funds added successfully', 'success')
+        return redirect(url_for('user_profile'))
+
+    return render_template('add_funds.html')
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True)
