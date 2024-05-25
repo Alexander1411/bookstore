@@ -81,17 +81,17 @@ def logout():
 def user_profile():
     if 'username' not in session:
         return redirect(url_for('login'))
-    
+
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
     user = cur.fetchone()
     cur.close()
-    
+
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cur.execute("SELECT * FROM orders WHERE user_id = %s", (session['user_id'],))
     orders = cur.fetchall()
     cur.close()
-    
+
     return render_template('profile.html', user=user, orders=orders)  # Updated to render 'profile.html'
 
 @app.route('/books')
@@ -328,13 +328,29 @@ def generate_po_number():
 def purchase():
     if 'username' not in session or 'cart' not in session:
         return redirect(url_for('login'))
-    
+
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
     # Generate a unique PO number
     po_number = generate_po_number()
     logging.debug(f"Generated PO Number: {po_number}")
-    
+
+    total_cost = 0
+    for book_id, quantity in session['cart'].items():
+        # Fetch book details
+        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+        book = cur.fetchone()
+        total_cost += book['price'] * quantity
+
+    # Fetch user balance
+    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
+    user = cur.fetchone()
+
+    if user['balance'] < total_cost:
+        flash('Insufficient funds for this purchase.', 'danger')
+        cur.close()
+        return redirect(url_for('cart'))
+
     for book_id, quantity in session['cart'].items():
         # Fetch book details
         cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
@@ -349,13 +365,16 @@ def purchase():
 
         # Update book inventory
         cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
-    
+
+    # Deduct balance
+    new_balance = user['balance'] - total_cost
+    cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id']))
     mysql.connection.commit()
     cur.close()
 
     # Clear cart
     session.pop('cart', None)
-    
+
     flash('Purchase successful!', 'success')
     return redirect(url_for('view_orders'))
 
