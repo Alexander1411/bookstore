@@ -12,9 +12,9 @@
                 <th>Title</th>
                 <th>Author</th>
                 <th>Price</th>
-                <th>Image URL</th>
+                <th>Image</th> <!-- Changed from "Image URL" to "Image" -->
                 <th>Inventory</th>
-                <th>Restock</th> <!-- Add this header -->
+                <th>Restock</th>
             </tr>
         </thead>
         <tbody>
@@ -24,14 +24,14 @@
                     <td>{{ book.title }}</td>
                     <td>{{ book.author }}</td>
                     <td>€{{ book.price }}</td>
-                    <td>{{ book.image_url }}</td>
+                    <td><img src="{{ book.image_url }}" alt="{{ book.title }}" style="width: 50px; height: auto;"></td> <!-- Render image -->
                     <td>{{ book.inventory }}</td>
-                    <td> <!-- Start of new form section -->
+                    <td>
                         <form action="{{ url_for('update_inventory', book_id=book.id) }}" method="POST">
-                            <input type="number" name="new_inventory" min="0" class="form-control" placeholder="">
+                            <input type="number" name="new_inventory" min="0" class="form-control" placeholder="Enter new stock">
                             <button type="submit" class="btn btn-primary mt-2">Update</button>
                         </form>
-                    </td> <!-- End of new form section -->
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
