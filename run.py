@@ -311,32 +311,45 @@ def buy_book(book_id):
 
     return redirect(url_for('view_orders'))
 
-@app.route('/purchase', methods=['POST'])  # New route for purchase
+
+# Function to generate a unique PO number
+def generate_po_number():
+    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    return f"{random_part}-{timestamp_part}"
+
+@app.route('/purchase')
 def purchase():
     if 'username' not in session or 'cart' not in session:
         return redirect(url_for('login'))
-
+    
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    try:
-        po_number = generate_po_number()
-        order_date = datetime.datetime.now()
-        for book_id, quantity in session['cart'].items():
-            # Insert each book in the cart into the orders table
-            cur.execute("""
-                INSERT INTO orders (user_id, book_id, quantity, po_number, order_date)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (session['user_id'], book_id, quantity, po_number, order_date))
-            # Update the book inventory
-            cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
-        mysql.connection.commit()
-        flash('Purchase completed successfully!', 'success')
-        session.pop('cart', None)  # Clear the cart after purchase
-    except Exception as e:
-        flash('An error occurred: ' + str(e), 'danger')
-    finally:
-        cur.close()
+    
+    # Generate a unique PO number
+    po_number = generate_po_number()
+    
+    for book_id, quantity in session['cart'].items():
+        # Fetch book details
+        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+        book = cur.fetchone()
 
-    return redirect(url_for('view_orders'))
+        # Insert order details
+        cur.execute(
+            "INSERT INTO orders (user_id, book_id, quantity, po_number, order_date) VALUES (%s, %s, %s, %s, NOW())",
+            (session['user_id'], book_id, quantity, po_number)
+        )
+
+        # Update book inventory
+        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
+    
+    mysql.connection.commit()
+    cur.close()
+
+    # Clear cart
+    session.pop('cart', None)
+    
+    flash('Purchase successful!', 'success')
+    return redirect(url_for('orders'))
 
 @app.route('/orders')  # Route to view orders
 def view_orders():
