@@ -318,51 +318,31 @@ def generate_po_number():
     timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     return f"{random_part}-{timestamp_part}"
 
-@app.route('/purchase')
+@app.route('/purchase', methods=['POST'])
 def purchase():
-    if 'username' not in session or 'cart' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
-    
+
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Generate a unique PO number
-    po_number = generate_po_number()
-    
-    for book_id, quantity in session['cart'].items():
-        # Fetch book details
-        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
-        book = cur.fetchone()
+    po_number = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
 
-        # Insert order details
-        cur.execute(
-            "INSERT INTO orders (user_id, book_id, quantity, po_number, order_date) VALUES (%s, %s, %s, %s, NOW())",
-            (session['user_id'], book_id, quantity, po_number)
-        )
-
-        # Update book inventory
-        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
-    
-    mysql.connection.commit()
+    if 'cart' in session:
+        for book_id, quantity in session['cart'].items():
+            cur.execute("INSERT INTO orders (user_id, book_id, quantity, po_number, order_date) VALUES (%s, %s, %s, %s, %s)", 
+                        (session['user_id'], book_id, quantity, po_number, datetime.now()))
+        mysql.connection.commit()
+        session.pop('cart', None)
     cur.close()
 
-    # Clear cart
-    session.pop('cart', None)
-    
-    flash('Purchase successful!', 'success')
-    return redirect(url_for('orders'))
+    return redirect(url_for('view_orders'))
 
-@app.route('/orders')  # Route to view orders
+@app.route('/orders')
 def view_orders():
     if 'username' not in session:
         return redirect(url_for('login'))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("""
-        SELECT o.po_number, o.order_date, b.title, o.quantity, b.price
-        FROM orders o
-        JOIN books b ON o.book_id = b.id
-        WHERE o.user_id = %s
-    """, (session['user_id'],))
+    cur.execute("SELECT o.po_number, o.order_date, b.title, o.quantity, b.price FROM orders o JOIN books b ON o.book_id = b.id WHERE o.user_id = %s", (session['user_id'],))
     orders = cur.fetchall()
     cur.close()
 
