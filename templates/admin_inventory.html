@@ -24,7 +24,7 @@
                     <td>{{ book.title }}</td>
                     <td>{{ book.author }}</td>
                     <td>€{{ book.price }}</td>
-                    <td><img src="{{ book.image_url }}" alt="{{ book.title }}" style="width: 50px; height: auto;"></td> <!-- Render image -->
+                    <td><img src="{{ book.image_url }}" alt="{{ book.title }}" style="width: 50px; height: auto;"></td> <!-- Render image --> <!--https://stackoverflow.com/questions/50001934/image-within-td-to-be-height-of-the-td-->
                     <td>{{ book.inventory }}</td>
                     <td>
                         <form action="{{ url_for('update_inventory', book_id=book.id) }}" method="POST">
