@@ -20,7 +20,7 @@ def home():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':  # Corrected here
+    if request.method == 'POST':
         username = request.form['username']
         pwd = request.form['password']
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -34,7 +34,7 @@ def login():
         if user and pwd == user['password']:
             session["username"] = user['username']
             session["user_id"] = user['id']
-            return redirect(url_for("user_profile"))  # Updated endpoint
+            return redirect(url_for("user_profile"))
         else:
             return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
@@ -71,7 +71,7 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/profile')
-def user_profile():  # Updated function name
+def user_profile():
     if 'username' not in session:
         return redirect(url_for('login'))
     
@@ -217,7 +217,7 @@ def edit_profile():
         cur.close()
         
         flash('Profile updated successfully', 'success')
-        return redirect(url_for('user_profile'))  # Updated endpoint
+        return redirect(url_for('user_profile'))
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
@@ -238,7 +238,7 @@ def add_funds():
         mysql.connection.commit()
         cur.close()
         flash('Funds added successfully', 'success')
-        return redirect(url_for('user_profile'))  # Updated endpoint
+        return redirect(url_for('user_profile'))
 
     return render_template('add_funds.html')
 
