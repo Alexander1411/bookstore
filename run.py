@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL, MySQLdb
 from flask_cors import CORS
+from decimal import Decimal
 import datetime
 import random
 import string
@@ -243,22 +244,21 @@ def edit_profile():
 def add_funds():
     if 'username' not in session:
         return redirect(url_for('login'))
-
+    
     if request.method == 'POST':
-        amount = float(request.form['amount'])
+        amount = Decimal(request.form['amount'])  # Convert to Decimal
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Fetch current balance
-        cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
-        user = cur.fetchone()
-        
-        # Update balance
-        new_balance = user['balance'] + amount
-        cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id']))
-        mysql.connection.commit()
-        cur.close()
-        
-        flash('Funds added successfully', 'success')
+        try:
+            cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
+            user = cur.fetchone()
+            new_balance = Decimal(user['balance']) + amount  # Ensure both are Decimal
+            cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id']))
+            mysql.connection.commit()
+            flash('Funds added successfully', 'success')
+        except Exception as e:
+            flash('An error occurred: ' + str(e), 'danger')
+        finally:
+            cur.close()
         return redirect(url_for('user_profile'))
 
     return render_template('add_funds.html')
