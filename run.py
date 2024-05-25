@@ -88,11 +88,17 @@ def user_profile():
     cur.close()
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT * FROM orders WHERE user_id = %s", (session['user_id'],))
+    cur.execute("""
+        SELECT o.po_number, o.order_date, b.title, o.quantity, b.price
+        FROM orders o
+        JOIN books b ON o.book_id = b.id
+        WHERE o.user_id = %s
+        ORDER BY o.order_date DESC
+    """, (session['user_id'],))
     orders = cur.fetchall()
     cur.close()
 
-    return render_template('profile.html', user=user, orders=orders)  # Updated to render 'profile.html'
+    return render_template('profile.html', user=user, orders=orders)
 
 @app.route('/books')
 def books_page():

@@ -61,18 +61,30 @@
 
         <h2 class="mt-4">Order History</h2>
         {% if orders %}
-            <ul class="list-group">
-                {% for order in orders %}
-                    <li class="list-group-item">
-                        <strong>Order ID:</strong> {{ order.id }}<br>
-                        <strong>Book ID:</strong> {{ order.book_id }}<br>
-                        <strong>Quantity:</strong> {{ order.quantity }}<br>
-                        <strong>Date:</strong> {{ order.order_date }}
-                    </li>
-                {% endfor %}
-            </ul>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>PO Number</th>
+                        <th>Order Date</th>
+                        <th>Title</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>{{ order.po_number or 'N/A' }}</td>
+                            <td>{{ order.order_date }}</td>
+                            <td>{{ order.title }}</td>
+                            <td>{{ order.quantity }}</td>
+                            <td>{{ order.price }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         {% else %}
-            <p>No orders found.</p>
+            <p>You have no orders.</p>
         {% endif %}
     </div>
 
