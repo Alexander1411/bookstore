@@ -349,7 +349,7 @@ def purchase():
     session.pop('cart', None)
     
     flash('Purchase successful!', 'success')
-    return redirect(url_for('view_orders'))  # Fixed to use 'view_orders' instead of 'orders'
+    return redirect(url_for('view_orders'))  # Redirect to view orders after purchase
 
 # Added a route to view orders
 @app.route('/view_orders')  
@@ -363,6 +363,7 @@ def view_orders():
         FROM orders o
         JOIN books b ON o.book_id = b.id
         WHERE o.user_id = %s
+        ORDER BY o.order_date DESC  # Ensure orders are fetched in descending order of purchase date
     """, (session['user_id'],))
     orders = cur.fetchall()
     cur.close()
