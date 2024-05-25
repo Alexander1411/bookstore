@@ -243,13 +243,21 @@ def edit_profile():
 def add_funds():
     if 'username' not in session:
         return redirect(url_for('login'))
-    
+
     if request.method == 'POST':
         amount = float(request.form['amount'])
-        cur = mysql.connection.cursor()
-        cur.execute("UPDATE tbl_users SET balance = balance + %s WHERE id = %s", (amount, session['user_id']))
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Fetch current balance
+        cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
+        user = cur.fetchone()
+        
+        # Update balance
+        new_balance = user['balance'] + amount
+        cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id']))
         mysql.connection.commit()
         cur.close()
+        
         flash('Funds added successfully', 'success')
         return redirect(url_for('user_profile'))
 
@@ -330,7 +338,7 @@ def generate_po_number():
     return f"{random_part}-{timestamp_part}"
 
 # Added methods=['GET', 'POST'] to allow both GET and POST requests
-@app.route('/purchase', methods=['GET', 'POST'])  
+@app.route('/purchase', methods=['GET', 'POST'])
 def purchase():
     if 'username' not in session or 'cart' not in session:
         return redirect(url_for('login'))
