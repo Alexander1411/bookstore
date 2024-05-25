@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL, MySQLdb
 from flask_cors import CORS
+import datetime
+import random
+import string
 
 app = Flask(__name__)
 CORS(app)
@@ -9,18 +12,18 @@ app.secret_key = 'supersecretkey'
 # MySQL Configuration
 app.config["MYSQL_HOST"] = "10.0.0.4"  # my VM IP
 app.config["MYSQL_USER"] = "remote_user"
-app.config["MYSQL_PASSWORD"] = "alexander" #explian how password was changed (High pressure)
+app.config["MYSQL_PASSWORD"] = "alexander" #explain how password was changed (High pressure)
 app.config["MYSQL_DB"] = "bookstore_users"
 
 mysql = MySQL(app)
 
 @app.route("/")
 def home():
-    return render_template("index.html") #dipslays the hompage/note to sell when explaining index=home page
+    return render_template("index.html") #displays the homepage/note to self when explaining index=home page
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-    if request.method == 'POST': #sets session variables after checks credetials 
+    if request.method == 'POST': #sets session variables after checking credentials 
         username = request.form['username']
         pwd = request.form['password']
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -104,7 +107,7 @@ def books_page():
     
     return render_template('books.html', books=books)
 
-@app.route('/add_to_cart/<int:book_id>')
+@app.route('/add_to_cart/<int:book_id>') # Defines a route that accepts a book ID as part of the URL.
 def add_to_cart(book_id):
     if 'username' in session:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -267,6 +270,63 @@ def update_inventory(book_id):
         cur.close()
 
     return redirect(url_for('admin_inventory'))
+
+# Helper function to generate a random PO number
+def generate_po_number(length=10):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+@app.route('/buy_book/<int:book_id>', methods=['POST'])  # Route to handle buying a book
+def buy_book(book_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # Get book details
+        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+        book = cur.fetchone()
+        if book['inventory'] < 1:
+            flash('This book is out of stock.', 'danger')
+            return redirect(url_for('books_page'))
+
+        # Update book inventory
+        cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
+        mysql.connection.commit()
+
+        # Generate a new PO number
+        po_number = generate_po_number()
+        order_date = datetime.datetime.now()
+
+        # Insert the order into the orders table
+        cur.execute("""
+            INSERT INTO orders (user_id, book_id, quantity, po_number, order_date)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (session['user_id'], book_id, 1, po_number, order_date))
+        mysql.connection.commit()
+        flash('Book purchased successfully!', 'success')
+    except Exception as e:
+        flash('An error occurred: ' + str(e), 'danger')
+    finally:
+        cur.close()
+
+    return redirect(url_for('view_orders'))
+
+@app.route('/orders')  # Route to view orders
+def view_orders():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("""
+        SELECT o.po_number, o.order_date, b.title, o.quantity, b.price
+        FROM orders o
+        JOIN books b ON o.book_id = b.id
+        WHERE o.user_id = %s
+    """, (session['user_id'],))
+    orders = cur.fetchall()
+    cur.close()
+
+    return render_template('orders.html', orders=orders)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True)
