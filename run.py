@@ -246,18 +246,26 @@ def add_funds():
 def update_inventory(book_id):
     if 'username' not in session or session['username'] != 'admin':
         return redirect(url_for('login'))
-    
-    new_inventory = request.form['new_inventory']
+
+    new_inventory = int(request.form['new_inventory'])
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     try:
-        cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (new_inventory, book_id))
+        # Fetch the current inventory
+        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))
+        current_inventory = cur.fetchone()['inventory']
+
+        # Calculate the new inventory
+        updated_inventory = current_inventory + new_inventory  # Added to update the inventory by adding new stock
+
+        # Update the inventory in the database
+        cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id))
         mysql.connection.commit()
         flash('Inventory updated successfully', 'success')
     except Exception as e:
         flash('An error occurred: ' + str(e), 'danger')
     finally:
         cur.close()
-    
+
     return redirect(url_for('admin_inventory'))
 
 if __name__ == "__main__":
