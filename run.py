@@ -12,18 +12,18 @@ app.secret_key = 'supersecretkey'
 # MySQL Configuration
 app.config["MYSQL_HOST"] = "10.0.0.4"  # my VM IP
 app.config["MYSQL_USER"] = "remote_user"
-app.config["MYSQL_PASSWORD"] = "alexander" #explain how password was changed (High pressure)
+app.config["MYSQL_PASSWORD"] = "alexander"  # explain how password was changed (High pressure)
 app.config["MYSQL_DB"] = "bookstore_users"
 
 mysql = MySQL(app)
 
 @app.route("/")
 def home():
-    return render_template("index.html") #displays the homepage/note to self when explaining index=home page
+    return render_template("index.html")  # displays the homepage/note to self when explaining index=home page
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-    if request.method == 'POST': #sets session variables after checking credentials 
+    if request.method == 'POST':  # sets session variables after checking credentials
         username = request.form['username']
         pwd = request.form['password']
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -107,7 +107,7 @@ def books_page():
     
     return render_template('books.html', books=books)
 
-@app.route('/add_to_cart/<int:book_id>') # Defines a route that accepts a book ID as part of the URL.
+@app.route('/add_to_cart/<int:book_id>')  # Defines a route that accepts a book ID as part of the URL.
 def add_to_cart(book_id):
     if 'username' in session:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -304,6 +304,33 @@ def buy_book(book_id):
         """, (session['user_id'], book_id, 1, po_number, order_date))
         mysql.connection.commit()
         flash('Book purchased successfully!', 'success')
+    except Exception as e:
+        flash('An error occurred: ' + str(e), 'danger')
+    finally:
+        cur.close()
+
+    return redirect(url_for('view_orders'))
+
+@app.route('/purchase', methods=['POST'])  # New route for purchase
+def purchase():
+    if 'username' not in session or 'cart' not in session:
+        return redirect(url_for('login'))
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        po_number = generate_po_number()
+        order_date = datetime.datetime.now()
+        for book_id, quantity in session['cart'].items():
+            # Insert each book in the cart into the orders table
+            cur.execute("""
+                INSERT INTO orders (user_id, book_id, quantity, po_number, order_date)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (session['user_id'], book_id, quantity, po_number, order_date))
+            # Update the book inventory
+            cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
+        mysql.connection.commit()
+        flash('Purchase completed successfully!', 'success')
+        session.pop('cart', None)  # Clear the cart after purchase
     except Exception as e:
         flash('An error occurred: ' + str(e), 'danger')
     finally:
