@@ -34,7 +34,7 @@ def login():
         if user and pwd == user['password']:
             session["username"] = user['username']
             session["user_id"] = user['id']
-            return redirect(url_for("user_profile"))
+            return redirect(url_for("user_profile"))  # Use 'profile' instead of 'user_profile'
         else:
             return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
@@ -85,7 +85,7 @@ def user_profile():
     orders = cur.fetchall()
     cur.close()
     
-    return render_template('profile.html', user=user, orders=orders)
+    return render_template('profile.html', user=user, orders=orders)  # Updated to render 'profile.html'
 
 @app.route('/books')
 def books_page():
