@@ -1,12 +1,14 @@
-{% extends "base.html" %}
-
-{% block title %}My Orders{% endblock %}
-
-{% block content %}
-<div class="container mt-5">
-    <h1>My Orders</h1>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Orders</title>
+</head>
+<body>
+    <h1>Your Orders</h1>
     {% if orders %}
-        <table class="table table-bordered">
+        <table>
             <thead>
                 <tr>
                     <th>PO Number</th>
@@ -23,13 +25,13 @@
                         <td>{{ order.order_date }}</td>
                         <td>{{ order.title }}</td>
                         <td>{{ order.quantity }}</td>
-                        <td>€{{ order.price }}</td>
+                        <td>{{ order.price }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     {% else %}
-        <p>No orders found.</p>
+        <p>You have no orders.</p>
     {% endif %}
-</div>
-{% endblock %}
+</body>
+</html>
