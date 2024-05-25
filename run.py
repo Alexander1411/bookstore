@@ -93,7 +93,7 @@ def user_profile():
         SELECT o.po_number, o.order_date, b.title, o.quantity, b.price
         FROM orders o
         JOIN books b ON o.book_id = b.id
-        WHERE o.user_id = %s
+        WHERE o.user_id = %s AND o.po_number IS NOT NULL AND o.po_number != 'N/A'
         ORDER BY o.order_date DESC
     """, (session['user_id'],))
     orders = cur.fetchall()
