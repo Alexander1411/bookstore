@@ -9,18 +9,18 @@ app.secret_key = 'supersecretkey'
 # MySQL Configuration
 app.config["MYSQL_HOST"] = "10.0.0.4"  # my VM IP
 app.config["MYSQL_USER"] = "remote_user"
-app.config["MYSQL_PASSWORD"] = "alexander"
+app.config["MYSQL_PASSWORD"] = "alexander" #explian how password was changed (High pressure)
 app.config["MYSQL_DB"] = "bookstore_users"
 
 mysql = MySQL(app)
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("index.html") #dipslays the hompage/note to sell when explaining index=home page
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
+    if request.method == 'POST': #sets session variables after checks credetials 
         username = request.form['username']
         pwd = request.form['password']
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -241,6 +241,24 @@ def add_funds():
         return redirect(url_for('user_profile'))
 
     return render_template('add_funds.html')
+
+@app.route('/update_inventory/<int:book_id>', methods=['POST'])
+def update_inventory(book_id):
+    if 'username' not in session or session['username'] != 'admin':
+        return redirect(url_for('login'))
+    
+    new_inventory = request.form['new_inventory']
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (new_inventory, book_id))
+        mysql.connection.commit()
+        flash('Inventory updated successfully', 'success')
+    except Exception as e:
+        flash('An error occurred: ' + str(e), 'danger')
+    finally:
+        cur.close()
+    
+    return redirect(url_for('admin_inventory'))
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=True)

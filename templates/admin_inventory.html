@@ -1,29 +1,49 @@
-{% extends "base.html" %}
-{% block title %}Admin Inventory{% endblock %}
-{% block content %}
-<h1>Admin Inventory</h1>
-<table class="table">
-    <thead>
-        <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Title</th>
-            <th scope="col">Author</th>
-            <th scope="col">Price</th>
-            <th scope="col">Image URL</th>
-            <th scope="col">Inventory</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for book in books %}
-        <tr>
-            <th scope="row">{{ book.id }}</th>
-            <td>{{ book.title }}</td>
-            <td>{{ book.author }}</td>
-            <td>€{{ book.price }}</td>
-            <td>{{ book.image_url }}</td>
-            <td>{{ book.inventory }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Inventory</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Admin Inventory</h1>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Price</th>
+                    <th>Image URL</th>
+                    <th>Inventory</th>
+                    <th>Restock</th> <!-- Add this header -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in books %}
+                    <tr>
+                        <td>{{ book.id }}</td>
+                        <td>{{ book.title }}</td>
+                        <td>{{ book.author }}</td>
+                        <td>€{{ book.price }}</td>
+                        <td>{{ book.image_url }}</td>
+                        <td>{{ book.inventory }}</td>
+                        <td> <!-- Start of new form section -->
+                            <form action="{{ url_for('update_inventory', book_id=book.id) }}" method="POST">
+                                <input type="number" name="new_inventory" min="0" class="form-control" placeholder="Enter new stock">
+                                <button type="submit" class="btn btn-primary mt-2">Update</button>
+                            </form>
+                        </td> <!-- End of new form section -->
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
