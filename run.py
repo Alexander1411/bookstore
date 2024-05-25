@@ -349,10 +349,10 @@ def purchase():
     session.pop('cart', None)
     
     flash('Purchase successful!', 'success')
-    return redirect(url_for('orders'))
+    return redirect(url_for('view_orders'))  # Fixed to use 'view_orders' instead of 'orders'
 
 # Added a route to view orders
-@app.route('/orders')  
+@app.route('/view_orders')  
 def view_orders():
     if 'username' not in session:
         return redirect(url_for('login'))
