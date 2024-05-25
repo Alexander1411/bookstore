@@ -28,7 +28,7 @@
                     <td>{{ book.inventory }}</td>
                     <td> <!-- Start of new form section -->
                         <form action="{{ url_for('update_inventory', book_id=book.id) }}" method="POST">
-                            <input type="number" name="new_inventory" min="0" class="form-control" placeholder="Enter new stock">
+                            <input type="number" name="new_inventory" min="0" class="form-control" placeholder="">
                             <button type="submit" class="btn btn-primary mt-2">Update</button>
                         </form>
                     </td> <!-- End of new form section -->
