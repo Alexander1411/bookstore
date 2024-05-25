@@ -4,6 +4,7 @@ from flask_cors import CORS
 import datetime
 import random
 import string
+import logging
 
 app = Flask(__name__)
 CORS(app)
@@ -16,6 +17,9 @@ app.config["MYSQL_PASSWORD"] = "alexander"  # explain how password was changed (
 app.config["MYSQL_DB"] = "bookstore_users"
 
 mysql = MySQL(app)
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
 @app.route("/")
 def home():
@@ -273,7 +277,9 @@ def update_inventory(book_id):
 
 # Helper function to generate a random PO number
 def generate_po_number(length=10):
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    return f"{random_part}-{timestamp_part}"
 
 @app.route('/buy_book/<int:book_id>', methods=['POST'])  # Route to handle buying a book
 def buy_book(book_id):
@@ -327,6 +333,7 @@ def purchase():
     
     # Generate a unique PO number
     po_number = generate_po_number()
+    logging.debug(f"Generated PO Number: {po_number}")
     
     for book_id, quantity in session['cart'].items():
         # Fetch book details
@@ -338,6 +345,7 @@ def purchase():
             "INSERT INTO orders (user_id, book_id, quantity, po_number, order_date) VALUES (%s, %s, %s, %s, NOW())",
             (session['user_id'], book_id, quantity, po_number)
         )
+        logging.debug(f"Inserted order for book ID {book_id} with PO Number: {po_number}")
 
         # Update book inventory
         cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
@@ -349,7 +357,7 @@ def purchase():
     session.pop('cart', None)
     
     flash('Purchase successful!', 'success')
-    return redirect(url_for('view_orders'))  # Redirect to view orders after purchase
+    return redirect(url_for('view_orders'))
 
 # Added a route to view orders
 @app.route('/view_orders')  
