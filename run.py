@@ -103,20 +103,13 @@ def user_profile():
 
 @app.route('/books')
 def books_page():
-    query = request.args.get('query')
-    sort_by = request.args.get('sort_by', 'title')  # Default sorting by title
+    sort_by = request.args.get('sort_by', 'price_asc')  # Default sorting by price ascending
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    if query:
-        if sort_by == 'price_asc':
-            cur.execute("SELECT * FROM books WHERE title LIKE %s ORDER BY price ASC", ('%' + query + '%',))
-        else:
-            cur.execute("SELECT * FROM books WHERE title LIKE %s", ('%' + query + '%',))
+    if sort_by == 'price_desc':
+        cur.execute("SELECT * FROM books ORDER BY price DESC")
     else:
-        if sort_by == 'price_asc':
-            cur.execute("SELECT * FROM books ORDER BY price ASC")
-        else:
-            cur.execute("SELECT * FROM books")
+        cur.execute("SELECT * FROM books ORDER BY price ASC")
     books = cur.fetchall()
     cur.close()
     

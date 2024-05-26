@@ -4,13 +4,12 @@
 <h1>Books</h1>
 <form method="get" action="{{ url_for('books_page') }}" class="mb-4">
     <div class="input-group">
-        <input type="text" name="query" class="form-control" placeholder="Search..." value="{{ request.args.get('query', '') }}">
         <select name="sort_by" class="form-control" onchange="this.form.submit()">
-            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Sort by Title</option>
             <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Sort by Price (Low to High)</option>
+            <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Sort by Price (High to Low)</option>
         </select>
         <div class="input-group-append">
-            <button type="submit" class="btn btn-primary">Search</button>
+            <button type="submit" class="btn btn-primary">Sort</button>
         </div>
     </div>
 </form>
