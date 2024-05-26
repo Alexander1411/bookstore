@@ -1,32 +1,88 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Books</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{{ url_for('home') }}">Bookstore</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('books_page') }}">Books</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('cart') }}">Cart</a>
+                </li>
+                {% if session.get('username') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('user_profile') }}">Profile</a>
+                    </li>
+                    <li class="nav-item"> <!-- Add Funds Link -->
+                        <a class="nav-link" href="{{ url_for('add_funds') }}">Add Funds</a>
+                    </li>
+                {% endif %}
+                {% if session.get('username') == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_inventory') }}">Admin Inventory</a>
+                    </li>
+                {% endif %}
+            </ul>
+            <form class="form-inline my-2 my-lg-0" action="{{ url_for('books_page') }}" method="GET">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="query">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+            {% if session.get('username') %}
+                <a class="btn btn-outline-danger ml-2" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a class="btn btn-outline-primary ml-2" href="{{ url_for('login') }}">Login</a>
+                <a class="btn btn-outline-secondary ml-2" href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </div>
+    </nav>
 
-{% block title %}Books{% endblock %}
-
-{% block content %}
-    <h1>Books</h1>
-    <form class="form-inline mb-3">
-        <label class="mr-2" for="sort_by">Sort by</label>
-        <select class="form-control" id="sort_by" name="sort_by" onchange="this.form.submit()">
-            <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price (Low to High)</option>
-            <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
-        </select>
-    </form>
-    {% for message in get_flashed_messages() %}
-        <div class="alert alert-warning">{{ message }}</div>
-    {% endfor %}
-    <div class="row">
-        {% for book in books %}
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <img src="{{ book.image_url }}" class="card-img-top" alt="{{ book.title }}">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ book.title }}</h5>
-                        <p class="card-text">{{ book.author }}</p>
-                        <p class="card-text">€{{ book.price }}</p>
-                        <a href="{{ url_for('add_to_cart', book_id=book.id) }}" class="btn btn-primary">Add to Cart</a>
+    <!-- Main content -->
+    <div class="container mt-4">
+        <h1>Books</h1>
+        <form class="form-inline mb-3">
+            <label class="mr-2" for="sort_by">Sort by</label>
+            <select class="form-control" id="sort_by" name="sort_by" onchange="this.form.submit()">
+                <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price (Low to High)</option>
+                <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
+            </select>
+        </form>
+        {% for message in get_flashed_messages() %}
+            <div class="alert alert-warning">{{ message }}</div>
+        {% endfor %}
+        <div class="row">
+            {% for book in books %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <img src="{{ book.image_url }}" class="card-img-top" alt="{{ book.title }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ book.title }}</h5>
+                            <p class="card-text">{{ book.author }}</p>
+                            <p class="card-text">€{{ book.price }}</p>
+                            <a href="{{ url_for('add_to_cart', book_id=book.id) }}" class="btn btn-primary">Add to Cart</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
+        </div>
     </div>
-{% endblock %}
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
