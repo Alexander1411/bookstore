@@ -42,6 +42,7 @@ def login():
         if user and pwd == user['password']:
             session["username"] = user['username']
             session["user_id"] = user['id']
+            session.pop('cart', None)  # Clear any existing cart on new login
             return redirect(url_for("user_profile"))  # Use 'profile' instead of 'user_profile'
         else:
             return render_template("login.html", error="Invalid username or password")
@@ -76,6 +77,7 @@ def register():
 def logout():
     session.pop('username', None)
     session.pop('user_id', None)
+    session.pop('cart', None)  # Ensure the cart is cleared on logout
     return redirect(url_for('home'))
 
 @app.route('/profile')
