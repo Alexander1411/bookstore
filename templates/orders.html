@@ -1,9 +1,10 @@
+<!-- cart.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Orders</title>
+    <title>Cart</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
@@ -46,33 +47,38 @@
 
     <!-- Main content -->
     <div class="container mt-4">
-        <h1>Your Orders</h1>
-        {% if orders %}
+        <h1>Cart</h1>
+        {% if books %}
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>PO Number</th>
-                        <th>Order Date</th>
                         <th>Title</th>
-                        <th>Quantity</th>
+                        <th>Author</th>
                         <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for order in orders %}
+                    {% for book in books %}
                         <tr>
-                            <td>{{ order.po_number or 'N/A' }}</td>
-                            <td>{{ order.order_date }}</td>
-                            <td>{{ order.title }}</td>
-                            <td>{{ order.quantity }}</td>
-                            <td>{{ order.price }}</td>
+                            <td>{{ book.title }}</td>
+                            <td>{{ book.author }}</td>
+                            <td>€{{ book.price }}</td>
+                            <td>{{ quantities[book.id] }}</td>
+                            <td>€{{ book.price * quantities[book.id] }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            <h3>Total Price: €{{ total_price }}</h3>
+            <form action="{{ url_for('purchase') }}" method="POST">
+                <button type="submit" class="btn btn-primary">Purchase</button>
+            </form>
         {% else %}
-            <p>You have no orders.</p>
+            <p>Your cart is empty.</p>
         {% endif %}
+        <a href="{{ url_for('clear_cart') }}" class="btn btn-danger">Clear Cart</a>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
