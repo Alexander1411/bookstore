@@ -339,26 +339,25 @@ def generate_po_number():
     return f"{random_part}-{timestamp_part}"
 
 # Added methods=['GET', 'POST'] to allow both GET and POST requests
-@app.route('/purchase', methods=['GET', 'POST'])
+@app.route('/purchase', methods=['POST'])
 def purchase():
-    if 'username' not in session or 'cart' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
+    
+    # Generate a unique PO number
     po_number = generate_po_number()
     logging.debug(f"Generated PO Number: {po_number}")
 
     total_cost = 0
     for book_id, quantity in session['cart'].items():
+        # Fetch book details
         cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
         book = cur.fetchone()
-        if book['inventory'] < quantity:
-            flash(f'Not enough stock for "{book["title"]}". Only {book["inventory"]} left.', 'danger')
-            cur.close()
-            return redirect(url_for('cart'))
         total_cost += book['price'] * quantity
 
+    # Fetch user balance
     cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
     user = cur.fetchone()
 
@@ -368,22 +367,27 @@ def purchase():
         return redirect(url_for('cart'))
 
     for book_id, quantity in session['cart'].items():
+        # Fetch book details
         cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
         book = cur.fetchone()
 
+        # Insert order details
         cur.execute(
             "INSERT INTO orders (user_id, book_id, quantity, po_number, order_date) VALUES (%s, %s, %s, %s, NOW())",
             (session['user_id'], book_id, quantity, po_number)
         )
         logging.debug(f"Inserted order for book ID {book_id} with PO Number: {po_number}")
 
+        # Update book inventory
         cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
 
+    # Deduct balance
     new_balance = user['balance'] - total_cost
     cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id']))
     mysql.connection.commit()
     cur.close()
 
+    # Clear cart
     session.pop('cart', None)
 
     flash('Purchase successful!', 'success')
