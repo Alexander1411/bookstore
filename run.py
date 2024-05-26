@@ -105,21 +105,28 @@ def user_profile():
 
 @app.route('/books')
 def books_page():
-    sort_by = request.args.get('sort_by', 'price_asc')  # Default sorting by price ascending
-    
+    sort_by = request.args.get('sort_by', 'price_asc')
+    query = request.args.get('query', '')
+
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    if sort_by == 'price_desc':
-        cur.execute("SELECT * FROM books ORDER BY price DESC")
+    
+    if query:
+        search_query = f"%{query}%"
+        cur.execute("SELECT * FROM books WHERE title LIKE %s ORDER BY price ASC", (search_query,))
     else:
-        cur.execute("SELECT * FROM books ORDER BY price ASC")
+        if sort_by == 'price_desc':
+            cur.execute("SELECT * FROM books ORDER BY price DESC")
+        else:
+            cur.execute("SELECT * FROM books ORDER BY price ASC")
+    
     books = cur.fetchall()
     cur.close()
-    
+
     for book in books:
         if book['inventory'] < 5:
             flash(f"Low stock alert: Only {book['inventory']} left of '{book['title']}'", 'warning')
     
-    return render_template('books.html', books=books, sort_by=sort_by)
+    return render_template('books.html', books=books, sort_by=sort_by, query=query)
 
 @app.route('/add_to_cart/<int:book_id>')
 def add_to_cart(book_id):
