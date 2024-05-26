@@ -28,7 +28,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('user_profile') }}">Profile</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item"> <!-- Add Funds Link -->
                         <a class="nav-link" href="{{ url_for('add_funds') }}">Add Funds</a>
                     </li>
                 {% endif %}
@@ -38,18 +38,16 @@
                     </li>
                 {% endif %}
             </ul>
-            <ul class="navbar-nav ml-auto">
-                <form class="form-inline my-2 my-lg-0" action="{{ url_for('books_page') }}" method="GET">
-                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="query">
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                </form>
-                {% if session.get('username') %}
-                    <a class="btn btn-outline-danger ml-2" href="{{ url_for('logout') }}">Logout</a>
-                {% else %}
-                    <a class="btn btn-outline-primary ml-2" href="{{ url_for('login') }}">Login</a>
-                    <a class="btn btn-outline-secondary ml-2" href="{{ url_for('register') }}">Register</a>
-                {% endif %}
-            </ul>
+            <form class="form-inline my-2 my-lg-0" action="{{ url_for('books_page') }}" method="GET">
+                <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" name="query">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+            {% if session.get('username') %}
+                <a class="btn btn-outline-danger ml-2" href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a class="btn btn-outline-primary ml-2" href="{{ url_for('login') }}">Login</a>
+                <a class="btn btn-outline-secondary ml-2" href="{{ url_for('register') }}">Register</a>
+            {% endif %}
         </div>
     </nav>
 
@@ -57,16 +55,15 @@
     <div class="container mt-4">
         <h1>Books</h1>
         <form class="form-inline mb-3">
-            <input class="form-control mr-sm-2" type="search" name="query" placeholder="Search" aria-label="Search" value="{{ query }}">
-            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-        </form>
-        <form class="form-inline mb-3">
             <label class="mr-2" for="sort_by">Sort by</label>
             <select class="form-control" id="sort_by" name="sort_by" onchange="this.form.submit()">
                 <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price (Low to High)</option>
                 <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price (High to Low)</option>
             </select>
         </form>
+        {% for message in get_flashed_messages() %}
+            <div class="alert alert-warning">{{ message }}</div>
+        {% endfor %}
         <div class="row">
             {% for book in books %}
                 <div class="col-md-4 mb-4">
