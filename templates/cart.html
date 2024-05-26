@@ -1,35 +1,92 @@
-{% extends "base.html" %}
-
-{% block title %}Cart{% endblock %}
-
-{% block content %}
-<div class="container mt-5">
-    <h1>Cart</h1>
-    {% if books %}
-        <ul class="list-group mb-3">
-            {% for book in books %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5>{{ book.title }}</h5>
-                        <p>Author: {{ book.author }}</p>
-                        <p>Price: €{{ book.price }}</p>
-                        <p>Quantity: {{ quantities[book.id] }}</p>
-                        {% if book.inventory < 5 %}
-                            <p class="text-danger">Low stock: Only {{ book.inventory }} left!</p>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <a href="{{ url_for('add_to_cart', book_id=book.id) }}" class="btn btn-sm btn-success">+</a>
-                        <a href="{{ url_for('remove_from_cart', book_id=book.id) }}" class="btn btn-sm btn-danger">-</a>
-                    </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{{ url_for('home') }}">Bookstore</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">Home</a>
                 </li>
-            {% endfor %}
-        </ul>
-        <h3>Total Price: €{{ total_price }}</h3>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('books_page') }}">Books</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('cart') }}">Cart</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('user_profile') }}">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('add_funds') }}">Add Funds</a>
+                </li>
+                {% if session['username'] == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('admin_inventory') }}">Admin Inventory</a>
+                </li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container mt-4">
+        <h1>Cart</h1>
+        {% if books %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in books %}
+                        <tr>
+                            <td>{{ book.title }}</td>
+                            <td>{{ book.author }}</td>
+                            <td>€{{ book.price }}</td>
+                            <td>{{ quantities[book.id] }}</td>
+                            <td>€{{ book.price * quantities[book.id] }}</td>
+                            <td>
+                                <a href="{{ url_for('add_to_cart', book_id=book.id) }}" class="btn btn-success btn-sm">+</a>
+                                <a href="{{ url_for('remove_from_cart', book_id=book.id) }}" class="btn btn-danger btn-sm">-</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h3>Total Price: €{{ total_price }}</h3>
+            <form action="{{ url_for('purchase') }}" method="POST">
+                <button type="submit" class="btn btn-primary">Purchase</button>
+            </form>
+        {% else %}
+            <p>Your cart is empty.</p>
+        {% endif %}
         <a href="{{ url_for('clear_cart') }}" class="btn btn-danger">Clear Cart</a>
-        <a href="{{ url_for('purchase') }}" class="btn btn-primary">Purchase</a> <!-- Added Purchase button -->
-    {% else %}
-        <p>Your cart is empty.</p>
-    {% endif %}
-</div>
-{% endblock %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
