@@ -104,11 +104,19 @@ def user_profile():
 @app.route('/books')
 def books_page():
     query = request.args.get('query')
+    sort_by = request.args.get('sort_by', 'title')  # Default sorting by title
+    
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     if query:
-        cur.execute("SELECT * FROM books WHERE title LIKE %s", ('%' + query + '%',))
+        if sort_by == 'price_asc':
+            cur.execute("SELECT * FROM books WHERE title LIKE %s ORDER BY price ASC", ('%' + query + '%',))
+        else:
+            cur.execute("SELECT * FROM books WHERE title LIKE %s", ('%' + query + '%',))
     else:
-        cur.execute("SELECT * FROM books")
+        if sort_by == 'price_asc':
+            cur.execute("SELECT * FROM books ORDER BY price ASC")
+        else:
+            cur.execute("SELECT * FROM books")
     books = cur.fetchall()
     cur.close()
     
@@ -116,7 +124,7 @@ def books_page():
         if book['inventory'] < 5:
             flash(f"Low stock alert: Only {book['inventory']} left of '{book['title']}'", 'warning')
     
-    return render_template('books.html', books=books)
+    return render_template('books.html', books=books, sort_by=sort_by)
 
 @app.route('/add_to_cart/<int:book_id>')  # Defines a route that accepts a book ID as part of the URL.
 def add_to_cart(book_id):
