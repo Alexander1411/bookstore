@@ -205,8 +205,17 @@ def cart():
             total_price += book['price'] * session['cart'][book_id]  # Calculate total price
         cur.close()
     
-    return render_template('cart.html', books=cart_books, quantities=cart_quantities, total_price=total_price)
+    # Check user's balance
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
+    user = cur.fetchone()
+    cur.close()
 
+    if user['balance'] < 10:
+        flash('Your balance is below €10. Please add more funds.', 'warning')
+    
+    return render_template('cart.html', books=cart_books, quantities=cart_quantities, total_price=total_price)
+    
 @app.route('/admin/inventory')
 def admin_inventory():
     if 'username' in session and session['username'] == 'admin':  # Only allow admin to access this page

@@ -47,6 +47,16 @@
     <!-- Main content -->
     <div class="container mt-4">
         <h1>Cart</h1>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
         {% if books %}
             <table class="table table-striped">
                 <thead>
@@ -79,10 +89,10 @@
             <form action="{{ url_for('purchase') }}" method="POST">
                 <button type="submit" class="btn btn-primary">Purchase</button>
             </form>
+            <a href="{{ url_for('clear_cart') }}" class="btn btn-danger">Clear Cart</a>
         {% else %}
             <p>Your cart is empty.</p>
         {% endif %}
-        <a href="{{ url_for('clear_cart') }}" class="btn btn-danger">Clear Cart</a>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
