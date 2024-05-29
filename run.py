@@ -324,10 +324,12 @@ def update_inventory(book_id):
 
     return redirect(url_for('admin_inventory'))
 
+# https://www.youtube.com/watch?v=Rxp3mkg2mRQ - This video helped in creating, reading, updating, and deleting records in Flask applications, which includes updating inventory. It demonstrates form handling and database interaction
+
 # Helper function to generate a random PO number
 def generate_po_number(length=10):
     random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-    timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S") # string "%Y%m%d%H%M%S" formats a datetime object into a string, representing the year/month/day/hour/minute and second.
     return f"{random_part}-{timestamp_part}"
 
 @app.route('/buy_book/<int:book_id>', methods=['POST'])  # Route to handle buying a book
@@ -365,12 +367,16 @@ def buy_book(book_id):
         cur.close()
 
     return redirect(url_for('view_orders'))
+# Reference: https://www.youtube.com/watch?v=CSHx6eCkmv0 - Helped me with managing inventory, and handling user sessions. 
+# Reference: https://github.com/kaiicheng/Flask-E-Commerce-Project - Found this gold, reverse engineered and incorporated few elements.
 
 # Function to generate a unique PO number
 def generate_po_number():
     random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
     timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     return f"{random_part}-{timestamp_part}"
+#REFERENCE: https://overiq.com/flask-101/creating-urls-in-flask/?utm_content=cmp-true - URL creation and handling in Flask
+
 
 # Added methods=['GET', 'POST'] to allow both GET and POST requests
 @app.route('/purchase', methods=['POST'])
@@ -426,6 +432,7 @@ def purchase():
 
     flash('Purchase successful!', 'success')
     return redirect(url_for('view_orders'))
+# Reference: https://www.digitalocean.com/community/tutorials/how-to-make-a-web-application-using-flask-in-python-3 - Helped me with handling routes, and managing database transactions, which are relevant to implementing a purchase functio
 
 # Added a route to view orders
 @app.route('/view_orders')  
