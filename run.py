@@ -180,33 +180,32 @@ def remove_from_cart(book_id):
         book_id_str = str(book_id)  # Convert book_id to string to ensure compatibility with session storage
         if book_id_str in cart:
             cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cur.execute("UPDATE books SET inventory = inventory + 1 WHERE id = %s", (book_id,))
-            mysql.connection.commit()
-            if cart[book_id_str] > 1:
-                cart[book_id_str] -= 1
+            cur.execute("UPDATE books SET inventory = inventory + 1 WHERE id = %s", (book_id,)) # Increase the book's inventory by 1
+            mysql.connection.commit() # Commit the transaction to save changes
+            if cart[book_id_str] > 1: # Check if the quantity of the book in the cart is > than 1
+                cart[book_id_str] -= 1 # Decrease the quantity of the book in the cart by 1
             else:
                 del cart[book_id_str]
             session['cart'] = cart
             
             # Remove from order history
-            cur.execute("DELETE FROM orders WHERE user_id = %s AND book_id = %s ORDER BY order_date DESC LIMIT 1", (session['user_id'], book_id))
+            cur.execute("DELETE FROM orders WHERE user_id = %s AND book_id = %s ORDER BY order_date DESC LIMIT 1", (session['user_id'], book_id)) # Delete the order from the orders table
             mysql.connection.commit()
             cur.close()
     return redirect(url_for('cart'))
 
 # https://github.com/01one/flask-tutorial-user-profile-template - Ive used this examples of managing session data and updating inventory in an app.
 
-
 @app.route('/clear_cart')
 def clear_cart():
     if 'username' in session:
         cart = session.pop('cart', {})
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        for book_id, quantity in cart.items():
-            cur.execute("UPDATE books SET inventory = inventory + %s WHERE id = %s", (quantity, book_id))
+        for book_id, quantity in cart.items(): # Iterate over the items in the cart (loop)
+            cur.execute("UPDATE books SET inventory = inventory + %s WHERE id = %s", (quantity, book_id)) # Increase the inventory of each book by the quantity in the cart
             mysql.connection.commit()
             # Clear order history
-            cur.execute("DELETE FROM orders WHERE user_id = %s AND book_id = %s", (session['user_id'], book_id))
+            cur.execute("DELETE FROM orders WHERE user_id = %s AND book_id = %s", (session['user_id'], book_id)) # Delete the order from the orders table
             mysql.connection.commit()
         cur.close()
     return redirect(url_for('cart'))
@@ -216,26 +215,26 @@ def cart():
     if 'username' not in session:
         return redirect(url_for('login'))
     
-    cart_books = []
-    cart_quantities = {}
+    cart_books = [] # An empty list to store book details
+    cart_quantities = {} # An empty dictionary to store book quantities
     total_price = 0
     if 'cart' in session:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         for book_id in session['cart']:
             cur.execute("SELECT * FROM books WHERE id = %s", (int(book_id),))  # Convert book_id back to int for querying
             book = cur.fetchone()
-            cart_books.append(book)
+            cart_books.append(book) # Add the book details to the list
             cart_quantities[int(book_id)] = session['cart'][book_id]  # Convert back to int for consistency
             total_price += book['price'] * session['cart'][book_id]  # Calculate total price
         cur.close()
     
     # Check user's balance
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
+    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],)) # Query the user's balance
     user = cur.fetchone()
     cur.close()
 
-    if user['balance'] < 10:
+    if user['balance'] < 10: # Check if the user's balance is below €10
         flash('Your balance is below €10. Please add more funds.', 'warning')
     
     return render_template('cart.html', books=cart_books, quantities=cart_quantities, total_price=total_price)
@@ -244,13 +243,13 @@ def cart():
 # https://marketsplash.com/how-to-create-a-shopping-cart-in-flask/ - Ive used this to create a shopping cart in Flask, including routes for viewing cart contents, updating quantity, and remove items from the cart
 
 @app.route('/admin/inventory')
-def admin_inventory():
+def admin_inventory(): # Admin to access this page
     if 'username' in session and session['username'] == 'admin':  # Only allow admin to access this page
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT * FROM books")
+        cur.execute("SELECT * FROM books") # Retrieve all books from the database
         books = cur.fetchall()
         cur.close()
-        return render_template('admin_inventory.html', books=books)
+        return render_template('admin_inventory.html', books=books) # Render the admin inventory page with the list of books
     return redirect(url_for('login'))
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
@@ -258,14 +257,14 @@ def edit_profile():
     if 'username' not in session:
         return redirect(url_for('login'))
     
-    if request.method == 'POST':
-        email = request.form['email']
-        name = request.form['name']
-        address = request.form['address']
+    if request.method == 'POST': # Check if the request method is POST (form submission)
+        email = request.form['email'] # Retrieve
+        name = request.form['name'] # Retrieve
+        address = request.form['address'] # Retrieve
         
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("UPDATE tbl_users SET email = %s, name = %s, address = %s WHERE id = %s", 
-                    (email, name, address, session['user_id']))
+        cur.execute("UPDATE tbl_users SET email = %s, name = %s, address = %s WHERE id = %s",  
+                    (email, name, address, session['user_id']))  # Update the user's email, name, and address in the database
         mysql.connection.commit()
         cur.close()
         
@@ -273,7 +272,7 @@ def edit_profile():
         return redirect(url_for('user_profile'))
     
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
+    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],)) # Retrieve the user's details from the database
     user = cur.fetchone()
     cur.close()
     
@@ -281,17 +280,17 @@ def edit_profile():
 
 @app.route('/add_funds', methods=['GET', 'POST'])
 def add_funds():
-    if 'username' not in session:
+    if 'username' not in session: 
         return redirect(url_for('login'))
     
-    if request.method == 'POST':
+    if request.method == 'POST': 
         amount = Decimal(request.form['amount'])  # Convert to Decimal
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         try:
-            cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
+            cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],)) # Retrieve the user's current balance from the database
             user = cur.fetchone()
-            new_balance = Decimal(user['balance']) + amount  # Ensure both are Decimal
-            cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id']))
+            new_balance = Decimal(user['balance']) + amount  # Calculate the new balance, ensuring both are Decimal
+            cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id'])) 
             mysql.connection.commit()
             flash('Funds added successfully', 'success')
         except Exception as e:
@@ -302,23 +301,23 @@ def add_funds():
 
     return render_template('add_funds.html')
 
-@app.route('/update_inventory/<int:book_id>', methods=['POST'])
+@app.route('/update_inventory/<int:book_id>', methods=['POST']) 
 def update_inventory(book_id):
-    if 'username' not in session or session['username'] != 'admin':
+    if 'username' not in session or session['username'] != 'admin': # Checks if the user is logged in and is an admin
         return redirect(url_for('login'))
 
-    new_inventory = int(request.form['new_inventory'])
+    new_inventory = int(request.form['new_inventory']) # Retrieve the new inventory amount from the form and convert it to an integer
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     try:
         # Fetch the current inventory
-        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))
-        current_inventory = cur.fetchone()['inventory']
+        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,)) # Retrieve the current inventory of the book
+        current_inventory = cur.fetchone()['inventory'] # Fetch the current inventory value
 
         # Calculate the new inventory
         updated_inventory = current_inventory + new_inventory  # Added to update the inventory by adding new stock
 
         # Update the inventory in the database
-        cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id))
+        cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id)) # Update the inventory in the database
         mysql.connection.commit()
         flash('Inventory updated successfully', 'success')
     except Exception as e:
@@ -326,12 +325,9 @@ def update_inventory(book_id):
     finally:
         cur.close()
 
-    return redirect(url_for('admin_inventory'))
+    return redirect(url_for('admin_inventory')) # https://www.youtube.com/watch?v=Rxp3mkg2mRQ - This video helped in creating, reading, updating, and deleting records in Flask applications, which includes updating inventory. It demonstrates form handling and database interaction
 
-# https://www.youtube.com/watch?v=Rxp3mkg2mRQ - This video helped in creating, reading, updating, and deleting records in Flask applications, which includes updating inventory. It demonstrates form handling and database interaction
-
-# Helper function to generate a random PO number
-def generate_po_number(length=10):
+def generate_po_number(length=10): # Helper function to generate a random PO number
     random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
     timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S") # string "%Y%m%d%H%M%S" formats a datetime object into a string, representing the year/month/day/hour/minute and second.
     return f"{random_part}-{timestamp_part}"
@@ -344,25 +340,25 @@ def buy_book(book_id):
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     try:
         # Get book details
-        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,)) # Retrieve the book details from the database
         book = cur.fetchone()
-        if book['inventory'] < 1:
+        if book['inventory'] < 1: #Checks if the book is out of stock
             flash('This book is out of stock.', 'danger')
             return redirect(url_for('books_page'))
 
         # Update book inventory
-        cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
+        cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,)) # Decrease the books inventory by 1
         mysql.connection.commit()
 
         # Generate a new PO number
         po_number = generate_po_number()
-        order_date = datetime.datetime.now()
+        order_date = datetime.datetime.now() # Get the current date and time
 
         # Insert the order into the orders table
         cur.execute("""
             INSERT INTO orders (user_id, book_id, quantity, po_number, order_date)
             VALUES (%s, %s, %s, %s, %s)
-        """, (session['user_id'], book_id, 1, po_number, order_date))
+        """, (session['user_id'], book_id, 1, po_number, order_date)) # Insert the order details into the orders table
         mysql.connection.commit()
         flash('Book purchased successfully!', 'success')
     except Exception as e:
@@ -376,9 +372,9 @@ def buy_book(book_id):
 
 # Function to generate a unique PO number
 def generate_po_number():
-    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
-    timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    return f"{random_part}-{timestamp_part}"
+    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) # Generates a random string of 10 uppercase letters and digits
+    timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S") # Generates a timestamp in the format YYYYMMDDHHMMSS
+    return f"{random_part}-{timestamp_part}" # Combine the random string and timestamp to create a unique PO number
 #REFERENCE: https://overiq.com/flask-101/creating-urls-in-flask/?utm_content=cmp-true - URL creation and handling in Flask
 
 
