@@ -9,7 +9,7 @@ import logging
 
 app = Flask(__name__)
 CORS(app)
-app.secret_key = 'supersecretkey'
+app.secret_key = 'supersecretkey' # Set the secret key for session management
 
 # MySQL Configuration
 app.config["MYSQL_HOST"] = "10.0.0.4"  # my VM IP
@@ -28,14 +28,15 @@ def home():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':  # sets session variables after checking credentials
-        username = request.form['username']
-        pwd = request.form['password']
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    if request.method == 'POST':  # sets session variables after checking credentials, 
+        username = request.form['username'] # Retrieve
+        pwd = request.form['password'] # Retrieve
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # cursor for the database
         try:
+            # Execute a query to find the user by username
             cur.execute("SELECT * FROM tbl_users WHERE username = %s", (username,)) # REFERENCE https://stackoverflow.com/questions/70585322/i-cant-find-the-correct-syntax-for-select-from
-            user = cur.fetchone()
-        except Exception as e:
+            user = cur.fetchone() # Fetch the user record
+        except Exception as e: # If occurs
             cur.close()
             return render_template("login.html", error="An error occurred: " + str(e))
         cur.close()
@@ -45,28 +46,31 @@ def login():
             session.pop('cart', None)  # Clear any existing cart on new login
             return redirect(url_for("user_profile"))
         else:
+            # Render the login page with an error message if credentials are invalid
             return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
 # REFERENCE https://flask.palletsprojects.com/en/2.0.x/tutorial/views/#the-login-view | This helped me undertand how to handle user login, session management, and error handling.
 
 @app.route('/register', methods=['GET', 'POST']) # 
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        pwd = request.form['password']
-        email = request.form['email']
-        name = request.form['name']
-        address = request.form['address']
+    if request.method == 'POST': # Check if the request method is POST
+        username = request.form['username'] # Retrieve
+        pwd = request.form['password'] # Retrieve
+        email = request.form['email'] # Retrieve
+        name = request.form['name'] # Retrieve
+        address = request.form['address'] # Retrieve
         
+        # Checks if any of the required fields are missing
         if not username or not pwd or not email or not name or not address:
-            flash('All fields are required!', 'danger')
+            flash('All fields are required!', 'danger') # Notification
             return redirect(url_for('register'))
         
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # Create a cursor for the database
         try:
+             # New user into the tbl_users table
             cur.execute("INSERT INTO tbl_users (username, password, email, name, address) VALUES (%s, %s, %s, %s, %s)", 
                         (username, pwd, email, name, address))
-            mysql.connection.commit()
+            mysql.connection.commit() # Commit the transaction to save changes
         except Exception as e:
             cur.close()
             return render_template("register.html", error="An error occurred: " + str(e))
@@ -86,23 +90,23 @@ def logout():
 
 @app.route('/profile')
 def user_profile():
-    if 'username' not in session:
+    if 'username' not in session: # Check 
         return redirect(url_for('login'))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],))
-    user = cur.fetchone()
+    cur.execute("SELECT * FROM tbl_users WHERE id = %s", (session['user_id'],)) # Retrieve the user's details from the database
+    user = cur.fetchone() # Fetch the user record
     cur.close()
 
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # Create anotherone
     cur.execute("""
         SELECT o.po_number, o.order_date, b.title, o.quantity, b.price
         FROM orders o
         JOIN books b ON o.book_id = b.id
         WHERE o.user_id = %s AND o.po_number IS NOT NULL AND o.po_number != 'N/A'
         ORDER BY o.order_date DESC
-    """, (session['user_id'],))
-    orders = cur.fetchall()
+    """, (session['user_id'],)) # Retrieve the user's order history from the database
+    orders = cur.fetchall() # Fetch all order records
     cur.close()
 
     return render_template('profile.html', user=user, orders=orders)
@@ -111,25 +115,25 @@ def user_profile():
 
 @app.route('/books')
 def books_page():
-    sort_by = request.args.get('sort_by', 'price_asc')
-    query = request.args.get('query', '')
+    sort_by = request.args.get('sort_by', 'price_asc') # Get the sorting order from the request, default to 'price_asc' (Previously missed/forgotten)
+    query = request.args.get('query', '') #Get the search query from the request, default to an empty string
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    if query:
-        search_query = f"%{query}%"
-        cur.execute("SELECT * FROM books WHERE title LIKE %s ORDER BY price ASC", (search_query,))
+    if query: # Check if there is a search query
+        search_query = f"%{query}%"  # Format the search query for a SQL LIKE clause
+        cur.execute("SELECT * FROM books WHERE title LIKE %s ORDER BY price ASC", (search_query,))  # Execute a query to find books that match the search/sorted by price ascending
     else:
-        if sort_by == 'price_desc':
-            cur.execute("SELECT * FROM books ORDER BY price DESC")
+        if sort_by == 'price_desc': # Check the sorting order and execute the appropriate query
+            cur.execute("SELECT * FROM books ORDER BY price DESC") # Sort books by price descending
         else:
-            cur.execute("SELECT * FROM books ORDER BY price ASC")
+            cur.execute("SELECT * FROM books ORDER BY price ASC") # Sort books by price asc
     
     books = cur.fetchall()
     cur.close()
 
-    for book in books:
-        if book['inventory'] < 5:
+    for book in books: # Iterate through the list of books
+        if book['inventory'] < 5: # If the less than 5
             flash(f"Low stock alert: Only {book['inventory']} left of '{book['title']}'", 'warning')
     
     return render_template('books.html', books=books, sort_by=sort_by, query=query)
@@ -140,29 +144,29 @@ def books_page():
 def add_to_cart(book_id):
     if 'username' in session:
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))
+        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,)) # Retrieve the books inventory from the database
         inventory = cur.fetchone()['inventory']
-        if inventory < 1:
+        if inventory < 1: # Checks if the book is out of stock
             flash('This book is out of stock.', 'danger')
             return redirect(url_for('books_page'))
-        cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,))
-        mysql.connection.commit()
+        cur.execute("UPDATE books SET inventory = inventory - 1 WHERE id = %s", (book_id,)) # Decrease the books inventory by 1
+        mysql.connection.commit() # Commit the transaction to save changes
 
-        if 'cart' not in session:
-            session['cart'] = {}
+        if 'cart' not in session: # Check if the cart is not in the session
+            session['cart'] = {} # Initialise an empty cart in the session
         cart = session['cart']
-        book_id_str = str(book_id)
+        book_id_str = str(book_id) # Convert book_id to string for session storage
         if book_id_str in cart:
-            cart[book_id_str] += 1
+            cart[book_id_str] += 1 # Increment the quantity of the book in the cart
         else:
-            cart[book_id_str] = 1
-        session['cart'] = cart
+            cart[book_id_str] = 1 # Add the book to the cart with quantity 1
+        session['cart'] = cart # Update the cart in the session
 
         if inventory <= 5:
             flash(f'Stock is low for this book. Only {inventory - 1} left.', 'warning')
 
         # Add to order history
-        cur.execute("INSERT INTO orders (user_id, book_id, quantity) VALUES (%s, %s, %s)", (session['user_id'], book_id, 1))
+        cur.execute("INSERT INTO orders (user_id, book_id, quantity) VALUES (%s, %s, %s)", (session['user_id'], book_id, 1)) # Insert the order into the orders table
         mysql.connection.commit()
         cur.close()
     return redirect(url_for('cart'))
@@ -381,7 +385,7 @@ def generate_po_number():
 # Added methods=['GET', 'POST'] to allow both GET and POST requests
 @app.route('/purchase', methods=['POST'])
 def purchase():
-    if 'username' not in session:
+    if 'username' not in session: # checks if the user is logged in
         return redirect(url_for('login'))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -390,23 +394,23 @@ def purchase():
     po_number = generate_po_number()
     logging.debug(f"Generated PO Number: {po_number}")
 
-    total_cost = 0
+    total_cost = 0 #Initialis the Total Cost Sets total_cost to 0
     for book_id, quantity in session['cart'].items():
         # Fetch book details
         cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
         book = cur.fetchone()
-        total_cost += book['price'] * quantity
+        total_cost += book['price'] * quantity #Calculate the total cost of items in the cart
 
     # Fetch user balance
     cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
     user = cur.fetchone()
 
-    if user['balance'] < total_cost:
+    if user['balance'] < total_cost: # Checking if the user has sufficient funds
         flash('Insufficient funds for this purchase.', 'danger')
-        cur.close()
+        cur.close() # Close the cursor if funds are insufficient
         return redirect(url_for('cart'))
 
-    for book_id, quantity in session['cart'].items():
+    for book_id, quantity in session['cart'].items(): # Iterate over items in the cart again
         # Fetch book details
         cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
         book = cur.fetchone()
@@ -416,15 +420,15 @@ def purchase():
             "INSERT INTO orders (user_id, book_id, quantity, po_number, order_date) VALUES (%s, %s, %s, %s, NOW())",
             (session['user_id'], book_id, quantity, po_number)
         )
-        logging.debug(f"Inserted order for book ID {book_id} with PO Number: {po_number}")
+        logging.debug(f"Inserted order for book ID {book_id} with PO Number: {po_number}") # Log the order insertion
 
         # Update book inventory
-        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))
+        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id)) 
 
     # Deduct balance
     new_balance = user['balance'] - total_cost
     cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id']))
-    mysql.connection.commit()
+    mysql.connection.commit() # Commit the transaction to save all changes
     cur.close()
 
     # Clear cart
