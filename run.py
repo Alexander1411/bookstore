@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 @app.route("/")
 def home():
-    return render_template("index.html")  # displays the homepage/note to self when explaining index=home page
+    return render_template("index.html")  # Used this for python tutorials https://realpython.com/
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -33,7 +33,7 @@ def login():
         pwd = request.form['password']
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         try:
-            cur.execute("SELECT * FROM tbl_users WHERE username = %s", (username,))
+            cur.execute("SELECT * FROM tbl_users WHERE username = %s", (username,)) # REFERENCE https://stackoverflow.com/questions/70585322/i-cant-find-the-correct-syntax-for-select-from
             user = cur.fetchone()
         except Exception as e:
             cur.close()
@@ -43,12 +43,13 @@ def login():
             session["username"] = user['username']
             session["user_id"] = user['id']
             session.pop('cart', None)  # Clear any existing cart on new login
-            return redirect(url_for("user_profile"))  # Use 'profile' instead of 'user_profile'
+            return redirect(url_for("user_profile"))
         else:
             return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
+# REFERENCE https://flask.palletsprojects.com/en/2.0.x/tutorial/views/#the-login-view | This helped me undertand how to handle user login, session management, and error handling.
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST']) # 
 def register():
     if request.method == 'POST':
         username = request.form['username']
@@ -72,6 +73,8 @@ def register():
         cur.close()
         return redirect(url_for('login'))
     return render_template('register.html')
+# REFERENCE https://github.com/Arunodhaya/Register-using-Flask - Found this repository, code for handling user registration, validating input fields, and inserting new users into a MySQL 
+# Reference: https://www.youtube.com/watch?v=Z1RJmh_OqeA - Watched a tutorial on creating a registration form in Flask, helped me.
 
 @app.route('/logout')
 def logout():
@@ -79,6 +82,7 @@ def logout():
     session.pop('user_id', None)
     session.pop('cart', None)  # Ensure the cart is cleared on logout
     return redirect(url_for('home'))
+#Reference: https://stackoverflow.com/questions/25331249/flask-login-log-out-user - Had a read on how to handle user logout in Flask,
 
 @app.route('/profile')
 def user_profile():
@@ -102,6 +106,8 @@ def user_profile():
     cur.close()
 
     return render_template('profile.html', user=user, orders=orders)
+#REFERENCE: https://github.com/MMansy19/Flask-User-Profile-Management - Used his example of managing user profiles, including retrieving user details and related orders from a database
+#REFERENCE: https://www.youtube.com/watch?v=CSHx6eCkmv0 - This helped me on how to implement user authentication and profile management in app.run.
 
 @app.route('/books')
 def books_page():
@@ -127,6 +133,8 @@ def books_page():
             flash(f"Low stock alert: Only {book['inventory']} left of '{book['title']}'", 'warning')
     
     return render_template('books.html', books=books, sort_by=sort_by, query=query)
+#REFERENCE: https://www.youtube.com/watch?v=cYWiDiIUxQc - Helped me by covering CRUD operations in Flask with SQLAlchemy (I used the similar logic), including how to query and filter data from a database
+#REFERENCE: https://www.youtube.com/watch?v=CSHx6eCkmv0 - Looked at querying databases, and rendering templates, helped me
 
 @app.route('/add_to_cart/<int:book_id>')
 def add_to_cart(book_id):
@@ -159,6 +167,8 @@ def add_to_cart(book_id):
         cur.close()
     return redirect(url_for('cart'))
 
+#REFERENCE https://www.youtube.com/watch?v=6WruncSoCdI - Explains adding items to the cart, managing inventory, and updating the database
+
 @app.route('/remove_from_cart/<int:book_id>')
 def remove_from_cart(book_id):
     if 'username' in session and 'cart' in session:
@@ -179,6 +189,9 @@ def remove_from_cart(book_id):
             mysql.connection.commit()
             cur.close()
     return redirect(url_for('cart'))
+
+# https://github.com/01one/flask-tutorial-user-profile-template - Ive used this examples of managing session data and updating inventory in an app.
+
 
 @app.route('/clear_cart')
 def clear_cart():
@@ -222,7 +235,10 @@ def cart():
         flash('Your balance is below €10. Please add more funds.', 'warning')
     
     return render_template('cart.html', books=cart_books, quantities=cart_quantities, total_price=total_price)
-    
+
+# https://roytuts.com/simple-shopping-cart-using-python-flask-mysql/ - Tells how to create a simple shopping cart in Flask, setting up routes to view the cart, add items and handle session management
+# https://marketsplash.com/how-to-create-a-shopping-cart-in-flask/ - Ive used this to create a shopping cart in Flask, including routes for viewing cart contents, updating quantity, and remove items from the cart
+
 @app.route('/admin/inventory')
 def admin_inventory():
     if 'username' in session and session['username'] == 'admin':  # Only allow admin to access this page
