@@ -157,13 +157,7 @@ Project Progression
 
 ### Security and Improvements
 - Enhanced password management.
-- Added logging for debugging and monitoring purposes.
 
-Logging
-Configured logging to capture debug-level information:
-```python
-logging.basicConfig(level=logging.DEBUG)
-```
 Security
 1. Updated the MySQL password, ensuring better security:
    ```python
