@@ -387,13 +387,13 @@ def purchase():
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
     # Generate a unique PO number
-    po_number = generate_po_number()
+    po_number = generate_po_number() # Generate a new purchase order number
     logging.debug(f"Generated PO Number: {po_number}")
 
     total_cost = 0 #Initialis the Total Cost Sets total_cost to 0
     for book_id, quantity in session['cart'].items():
         # Fetch book details
-        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,)) # Retrieve the book details from the database
         book = cur.fetchone()
         total_cost += book['price'] * quantity #Calculate the total cost of items in the cart
 
@@ -408,22 +408,22 @@ def purchase():
 
     for book_id, quantity in session['cart'].items(): # Iterate over items in the cart again
         # Fetch book details
-        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))
+        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,)) # Retrieve the user's current balance from the database
         book = cur.fetchone()
 
         # Insert order details
         cur.execute(
             "INSERT INTO orders (user_id, book_id, quantity, po_number, order_date) VALUES (%s, %s, %s, %s, NOW())",
-            (session['user_id'], book_id, quantity, po_number)
+            (session['user_id'], book_id, quantity, po_number) # Inserts the order details into the orders table
         )
         logging.debug(f"Inserted order for book ID {book_id} with PO Number: {po_number}") # Log the order insertion
 
         # Update book inventory
-        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id)) 
+        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id)) # Decrease the books inventory by the quantity purchased
 
     # Deduct balance
-    new_balance = user['balance'] - total_cost
-    cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id']))
+    new_balance = user['balance'] - total_cost # Calculate the new balance
+    cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id'])) # Update the user's balance in the database
     mysql.connection.commit() # Commit the transaction to save all changes
     cur.close()
 
@@ -447,7 +447,7 @@ def view_orders():
         JOIN books b ON o.book_id = b.id
         WHERE o.user_id = %s AND o.po_number IS NOT NULL AND o.po_number != 'N/A'
         ORDER BY o.order_date DESC
-    """, (session['user_id'],))
+    """, (session['user_id'],)) # Retrieve orders for the logged in user, excluding those with no PO number or marked 'N/A'
     orders = cur.fetchall()
     cur.close()
 
