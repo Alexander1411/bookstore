@@ -17,7 +17,7 @@ Installation
 1. Clone the repository:
    ```sh
    git clone https://github.com/Alexander1411/bookstore.git
-   cd bookstore
+   cd bookstore/
    ```
 2. Install the required Python packages:
    ```sh
