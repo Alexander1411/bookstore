@@ -5,6 +5,8 @@
 {% block content %}
 <div class="container mt-5">
     <h1>Admin Inventory</h1>
+    <!-- Placeholder for displaying messages -->
+    <div id="inventoryMessage"></div>
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -12,7 +14,7 @@
                 <th>Title</th>
                 <th>Author</th>
                 <th>Price</th>
-                <th>Image</th> <!-- Changed from "Image URL" to "Image" -->
+                <th>Image</th>
                 <th>Inventory</th>
                 <th>Restock</th>
             </tr>
@@ -24,10 +26,11 @@
                     <td>{{ book.title }}</td>
                     <td>{{ book.author }}</td>
                     <td>€{{ book.price }}</td>
-                    <td><img src="{{ book.image_url }}" alt="{{ book.title }}" style="width: 50px; height: auto;"></td> <!-- Render image --> <!--https://stackoverflow.com/questions/50001934/image-within-td-to-be-height-of-the-td-->
+                    <td><img src="{{ book.image_url }}" alt="{{ book.title }}" style="width: 50px; height: auto;"></td>
                     <td>{{ book.inventory }}</td>
                     <td>
-                        <form action="{{ url_for('update_inventory', book_id=book.id) }}" method="POST">
+                        <!-- Form for updating inventory with a unique data-book-id attribute -->
+                        <form class="update-inventory-form" data-book-id="{{ book.id }}">
                             <input type="number" name="new_inventory" min="0" class="form-control" placeholder="Enter new stock">
                             <button type="submit" class="btn btn-primary mt-2">Update</button>
                         </form>
@@ -37,4 +40,44 @@
         </tbody>
     </table>
 </div>
+
+<!-- Include jQuery library -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function(){
+        // Attach submit event handler to all forms with class 'update-inventory-form'
+        $(".update-inventory-form").on("submit", function(event){
+            event.preventDefault();  // Prevent the default form submission behavior
+            var form = $(this);  // Get theform that triggered the event
+            var bookId = form.data("book-id");  // Get the book ID from the data attribute
+            var newInventory = parseInt(form.find("input[name='new_inventory']").val());  // Get the new inventory valu
+
+            // Check if the new inventory value is valid
+            if (isNaN(newInventory) || newInventory < 0) {
+                $('#inventoryMessage').html("<p style='color:red;'>Please enter a valid number.</p>");
+                return;
+            }
+
+            // Send AJAX request to update the inventory
+            $.ajax({
+                type: "POST",  // HTTP method
+                url: "/update_inventory/" + bookId,  // URL to send the request to
+                contentType: "application/json",  // Data type
+                data: JSON.stringify({new_inventory: newInventory}),  // Data to be sent in JSON format
+                success: function(response) {
+                    // Display success or error message based on the response
+                    if (response.success) {
+                        $('#inventoryMessage').html("<p style='color:green;'>" + response.message + "</p>");
+                        location.reload();  // Reload the page to see the updated inventory
+                    } else {
+                        $('#inventoryMessage').html("<p style='color:red;'>" + response.message + "</p>");
+                    }
+                },
+                error: function() {
+                    $('#inventoryMessage').html("<p style='color:red;'>An error occurred.</p>");
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

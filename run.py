@@ -243,15 +243,33 @@ def cart():
 # https://roytuts.com/simple-shopping-cart-using-python-flask-mysql/ - Tells how to create a simple shopping cart in Flask, setting up routes to view the cart, add items and handle session management
 # https://marketsplash.com/how-to-create-a-shopping-cart-in-flask/ - Ive used this to create a shopping cart in Flask, including routes for viewing cart contents, updating quantity, and remove items from the cart
 
-@app.route('/admin/inventory')
-def admin_inventory(): # Admin to access this page
-    if 'username' in session and session['username'] == 'admin':  # Only allow admin to access this page
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT * FROM books") # Retrieve all books from the database
-        books = cur.fetchall()
+@app.route('/update_inventory/<int:book_id>', methods=['POST']) 
+def update_inventory(book_id):
+    if 'username' not in session or session['username'] != 'admin': # Check if the user is logged in and is an admin
+        return jsonify({"success": False, "message": "Unauthorized access"}), 401
+
+    data = request.get_json()  # Get JSON data from the request
+    new_inventory = data.get('new_inventory')  # Retrieve the new inventory amount from the JSON data
+    if new_inventory is None:
+        return jsonify({"success": False, "message": "No inventory data provided"}), 400
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # Fetch the current inventory
+        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,)) # Retrieve the current inventory of the book
+        current_inventory = cur.fetchone()['inventory'] # Fetch the current inventory value
+
+        # Calculate the new inventory
+        updated_inventory = current_inventory + new_inventory  # Update the inventory by adding new stock
+
+        # Update the inventory in the database
+        cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id)) # Update the inventory in the database
+        mysql.connection.commit() # Commit the transaction to save changes
+        return jsonify({"success": True, "message": "Inventory updated successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "message": "An error occurred: " + str(e)})
+    finally:
         cur.close()
-        return render_template('admin_inventory.html', books=books) # Render the admin inventory page with the list of books
-    return redirect(url_for('login'))
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
