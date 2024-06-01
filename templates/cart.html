@@ -6,7 +6,7 @@
     <title>Cart</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- PayPal SDK -->
-    <script src="https://www.paypal.com/sdk/js?client-id=AXhb2H6R17nk_ZxPsHfJVCf3SeGE73fvBzxlvYA0SKY9xm6lT-fHCO6VaxXUOvXGD1tORyDEtdgBu_mG=EUR"></script> <!-- https://developer.paypal.com/sdk/js/configuration/ -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AXhb2H6R17nk_ZxPsHfJVCf3SeGE73fvBzxlvYA0SKY9xm6lT-fHCO6VaxXUOvXGD1tORyDEtdgBu_mG&currency=EUR"></script> <!-- PayPal SDK script -->
 </head>
 <body>
     <!-- Navbar -->
@@ -92,7 +92,8 @@
                 <button type="submit" class="btn btn-primary">Purchase</button>
             </form>
             <a href="{{ url_for('clear_cart') }}" class="btn btn-danger">Clear Cart</a>
- <!-- PayPal Button Container -->
+
+            <!-- PayPal Button Container -->
             <div id="paypal-button-container" class="mt-3"></div> <!-- Container for the PayPal button -->
 
             <script>
@@ -125,7 +126,7 @@
                             window.location.href = "/view_orders"; // Redirect the user to the orders page
                         });
                     }
-                }).render('#paypal-button-container'); // Render the PayPal button into the container # Reference: https://developer.paypal.com/demo/checkout/#/pattern/server 
+                }).render('#paypal-button-container'); // Render the PayPal button into the container
             </script> 
         {% else %}
             <p>Your cart is empty.</p>
