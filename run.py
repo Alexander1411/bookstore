@@ -243,33 +243,15 @@ def cart():
 # https://roytuts.com/simple-shopping-cart-using-python-flask-mysql/ - Tells how to create a simple shopping cart in Flask, setting up routes to view the cart, add items and handle session management
 # https://marketsplash.com/how-to-create-a-shopping-cart-in-flask/ - Ive used this to create a shopping cart in Flask, including routes for viewing cart contents, updating quantity, and remove items from the cart
 
-@app.route('/update_inventory/<int:book_id>', methods=['POST']) 
-def update_inventory(book_id):
-    if 'username' not in session or session['username'] != 'admin': # Check if the user is logged in and is an admin
-        return jsonify({"success": False, "message": "Unauthorized access"}), 401
-
-    data = request.get_json()  # Get JSON data from the request
-    new_inventory = data.get('new_inventory')  # Retrieve the new inventory amount from the JSON data
-    if new_inventory is None:
-        return jsonify({"success": False, "message": "No inventory data provided"}), 400
-
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    try:
-        # Fetch the current inventory
-        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,)) # Retrieve the current inventory of the book
-        current_inventory = cur.fetchone()['inventory'] # Fetch the current inventory value
-
-        # Calculate the new inventory
-        updated_inventory = current_inventory + new_inventory  # Update the inventory by adding new stock
-
-        # Update the inventory in the database
-        cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id)) # Update the inventory in the database
-        mysql.connection.commit() # Commit the transaction to save changes
-        return jsonify({"success": True, "message": "Inventory updated successfully"})
-    except Exception as e:
-        return jsonify({"success": False, "message": "An error occurred: " + str(e)})
-    finally:
+@app.route('/admin/inventory')
+def admin_inventory(): # Admin to access this page
+    if 'username' in session and session['username'] == 'admin':  # Only allow admin to access this page
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT * FROM books") # Retrieve all books from the database
+        books = cur.fetchall()
         cur.close()
+        return render_template('admin_inventory.html', books=books) # Render the admin inventory page with the list of books
+    return redirect(url_for('login'))
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 def edit_profile():
@@ -320,31 +302,32 @@ def add_funds():
 
     return render_template('add_funds.html')
 
-@app.route('/update_inventory/<int:book_id>', methods=['POST']) 
-def update_inventory(book_id):
-    if 'username' not in session or session['username'] != 'admin': # Checks if the user is logged in and is an admin
-        return redirect(url_for('login'))
+@app.route('/update_inventory/<int:book_id>', methods=['POST'])  # Define a route for updating inventory, accepting POST requests with an integer book_id
+def update_inventory(book_id):  # Define the function that handles the inventory update
+    if 'username' not in session or session['username'] != 'admin':  # Check if the user is logged in and is an admin
+        return jsonify({"success": False, "message": "Unauthorized access"}), 401  # If not authorised, return a JSON response with an error message and 401 status code
 
-    new_inventory = int(request.form['new_inventory']) # Retrieve the new inventory amount from the form and convert it to an integer
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    data = request.get_json()  # Get the JSON data from the request
+    new_inventory = data.get('new_inventory')  # Retrieve the new inventory amount from the JSON data
+    if new_inventory is None:  # Check if the new inventory data is provided
+        return jsonify({"success": False, "message": "No inventory data provided"}), 400  # If not, return an error message with a 400 status code
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)  # Create a cursor to interact with the database
     try:
-        # Fetch the current inventory
-        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,)) # Retrieve the current inventory of the book
-        current_inventory = cur.fetchone()['inventory'] # Fetch the current inventory value
+        cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))  # Retrieve the current inventory of the book from the database
+        current_inventory = cur.fetchone()['inventory']  # Fetch the current inventory value
 
-        # Calculate the new inventory
-        updated_inventory = current_inventory + new_inventory  # Added to update the inventory by adding new stock
+        updated_inventory = current_inventory + new_inventory  # Calculate the new inventory by adding the provided amount to the current inventory
 
-        # Update the inventory in the database
-        cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id)) # Update the inventory in the database
-        mysql.connection.commit()
-        flash('Inventory updated successfully', 'success')
-    except Exception as e:
-        flash('An error occurred: ' + str(e), 'danger')
+        cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id))  # Update the inventory in the database
+        mysql.connection.commit()  # Commit the transaction to save the changes
+        return jsonify({"success": True, "message": "Inventory updated successfully"})  # Return a success message in JSON format
+    except Exception as e:  
+        return jsonify({"success": False, "message": "An error occurred: " + str(e)})  # Return an error message in JSON format
     finally:
-        cur.close()
-
-    return redirect(url_for('admin_inventory')) # https://www.youtube.com/watch?v=Rxp3mkg2mRQ - This video helped in creating, reading, updating, and deleting records in Flask applications, which includes updating inventory. It demonstrates form handling and database interaction
+        cur.close() 
+# https://www.youtube.com/watch?v=Rxp3mkg2mRQ - This video helped in creating, reading, updating, and deleting records in Flask applications, which includes updating inventory. It demonstrates form handling and database interaction
+# https://flask-mysql.readthedocs.io/en/latest/ - This helped me in general for SQL, setting up the MySQL database, configuring Flask-MySQL, and interacting with the database using cursors
 
 def generate_po_number(length=10): # Helper function to generate a random PO number
     random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
