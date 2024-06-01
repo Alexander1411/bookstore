@@ -48,15 +48,18 @@
         // Attach submit event handler to all forms with class 'update-inventory-form'
         $(".update-inventory-form").on("submit", function(event){
             event.preventDefault();  // Prevent the default form submission behavior
-            var form = $(this);  // Get theform that triggered the event
+            var form = $(this);  // Get the form that triggered the event
             var bookId = form.data("book-id");  // Get the book ID from the data attribute
-            var newInventory = parseInt(form.find("input[name='new_inventory']").val());  // Get the new inventory valu
+            var newInventory = parseInt(form.find("input[name='new_inventory']").val());  // Get the new inventory value
 
             // Check if the new inventory value is valid
             if (isNaN(newInventory) || newInventory < 0) {
                 $('#inventoryMessage').html("<p style='color:red;'>Please enter a valid number.</p>");
                 return;
             }
+
+            // Debugging: Log the new inventory value
+            console.log("Updating book ID:", bookId, "with new inventory:", newInventory);
 
             // Send AJAX request to update the inventory
             $.ajax({

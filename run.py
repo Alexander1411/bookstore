@@ -322,10 +322,11 @@ def update_inventory(book_id):  # Define the function that handles the inventory
         cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id))  # Update the inventory in the database
         mysql.connection.commit()  # Commit the transaction to save the changes
         return jsonify({"success": True, "message": "Inventory updated successfully"})  # Return a success message in JSON format
-    except Exception as e:  
+    except Exception as e:  # Handle any exceptions that occur
         return jsonify({"success": False, "message": "An error occurred: " + str(e)})  # Return an error message in JSON format
     finally:
-        cur.close() 
+        cur.close()  
+
 # https://www.youtube.com/watch?v=Rxp3mkg2mRQ - This video helped in creating, reading, updating, and deleting records in Flask applications, which includes updating inventory. It demonstrates form handling and database interaction
 # https://flask-mysql.readthedocs.io/en/latest/ - This helped me in general for SQL, setting up the MySQL database, configuring Flask-MySQL, and interacting with the database using cursors
 
