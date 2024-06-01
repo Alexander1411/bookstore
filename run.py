@@ -454,6 +454,20 @@ def view_orders():
 
     return render_template('orders.html', orders=orders)
 
+# Helper function to get PayPal access token
+def get_paypal_access_token(): 
+    client_id = 'AXhb2H6R17nk_ZxPsHfJVCf3SeGE73fvBzxlvYA0SKY9xm6lT-fHCO6VaxXUOvXGD1tORyDEtdgBu_mG' # Assign PayPal client ID to the variable client_id
+    secret = 'EL9c94i_SYMQd5qCGw-IyhQX6_ri47nkftdYK-XitsNRkBD23UpxC6twzpfxQtGlOd_SV0WA3TIo-ShK'  # Assign PayPal secret to the variable secret
+    auth = (client_id, secret) # Create a tuple named auth containing the client_id and secret for Basic Authentication
+    data = {'grant_type': 'client_credentials'} # Create a dictionary named data with a key-value pair to specify the grant type
+    headers = {'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded'} # Create a dictionary named headers to specify the expected response and content type
+
+    response = requests.post('https://api-m.sandbox.paypal.com/v1/oauth2/token', headers=headers, data=data, auth=auth)  #Send a POST request to PayPals OAuth2 token endpoint with headers, data, and authentication
+    if response.status_code == 200:  # Check if the response status code is 200 (indicating success)
+        return response.json()['access_token'] # Return the access token from the JSON response
+    else:
+        raise Exception("Could not get PayPal access token")
+
 # PayPal create transaction route
 @app.route('/create-paypal-transaction', methods=['POST'])
 def create_paypal_transaction():
