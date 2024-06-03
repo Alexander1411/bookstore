@@ -322,7 +322,7 @@ def update_inventory(book_id):  # Define the function that handles the inventory
 
         cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id))  # Update the inventory in the database
         mysql.connection.commit()  # Commit the transaction to save the changes
-        return jsonify({"success": True, "message": "Inventory updated successfully"})  # Return a success message in JSON format
+        return jsonify({"success": True, "message": "Inventory updated successfully", "updated_inventory": updated_inventory})  # Return a success message in JSON format
     except Exception as e:  # Handle any exceptions that occur
         return jsonify({"success": False, "message": "An error occurred: " + str(e)})  # Return an error message in JSON format
     finally:
