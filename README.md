@@ -12,6 +12,7 @@ Table of Contents
 6. Security
 7. Acknowledgements
 8. Information system
+9. PayPal Integration
 
 Installation
 1. Clone the repository:
@@ -117,10 +118,12 @@ Method: GET
 Description: Displays the user's order history.
 
 Admin
-Inventory Management
-Route: `/admin/inventory`
+Inventory Management Route:`/admin/inventory`
 Method: GET
 Description: Allows the admin to view and manage book inventory.
+Update Inventory Route:`/update_inventory/<int:book_id>`
+Method:POST
+Description: Allows the admin to update the inventory of a book.
 
 Update Inventory
 Route: `/update_inventory/<int:book_id>`
