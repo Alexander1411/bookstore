@@ -332,7 +332,7 @@ def update_inventory(book_id):  # Define the function that handles the inventory
 # https://flask-mysql.readthedocs.io/en/latest/ - This helped me in general for SQL, setting up the MySQL database, configuring Flask-MySQL, and interacting with the database using cursors
 
 def generate_po_number(length=10): # Helper function to generate a random PO number
-    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
+    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)) # https://stackoverflow.com/questions/2257441/random-string-generation-with-upper-case-letters-and-digits?page=2&tab=scoredesc
     timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S") # string "%Y%m%d%H%M%S" formats a datetime object into a string, representing the year/month/day/hour/minute and second.
     return f"{random_part}-{timestamp_part}"
 
