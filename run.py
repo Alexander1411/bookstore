@@ -535,4 +535,4 @@ def get_paypal_access_token():
 # https://developer.paypal.com/docs/api/orders/v2/ - used same logic, its offical Pypal instruction
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=False)
