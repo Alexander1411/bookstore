@@ -44,11 +44,11 @@
     var $j = jQuery.noConflict(); // https://stackoverflow.com/questions/7882374/how-do-i-implement-jquery-noconflict - Implementing JQuery.noConflict()
     $j(document).ready(function() { // https://stackoverflow.com/questions/24982226/how-to-show-ajax-response-message-in-alert - Used logic from this source 
         $j('.update-inventory-form').on('submit', function(event) {
-            event.preventDefault();
+            event.preventDefault(); // This prevents default page reload 
             var form = $j(this); // https://stackoverflow.com/questions/933703/is-this-a-correct-way-to-call-a-javascript-function - Directed me into a correct way to call javascripts
             var bookId = form.data('book-id');
             var newInventory = form.find('input[name="new_inventory"]').val();
-            $j.ajax({
+            $j.ajax({ // Asynchronous connection 
                 url: '/update_inventory/' + bookId,
                 type: 'POST',
                 contentType: 'application/json',
@@ -59,7 +59,7 @@
                         $j('#book-' + bookId + ' .book-inventory').text(newInventory); // Update the inventory cell directly
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function(xhr, status, error) { // https://stackoverflow.com/questions/377644/jquery-ajax-error-handling-show-custom-exception-messages - Error handling, show custom exeption message 
                     alert('Error: ' + error);
                 }
             });
