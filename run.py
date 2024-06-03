@@ -309,8 +309,8 @@ def update_inventory(book_id):  # Define the function that handles the inventory
     if not data:
         return jsonify({"success": False, "message": "No data provided"}), 400  # If not, return an error message with a 400 status code
 
-    new_inventory = data.get('new_inventory')
-    if new_inventory is None:
+    additional_inventory = data.get('additional_inventory')
+    if additional_inventory is None:
         return jsonify({"success": False, "message": "No inventory data provided"}), 400
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)  # Create a cursor to interact with the database
@@ -318,7 +318,7 @@ def update_inventory(book_id):  # Define the function that handles the inventory
         cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))  # Retrieve the current inventory of the book from the database
         current_inventory = cur.fetchone()['inventory']  # Fetch the current inventory value
 
-        updated_inventory = new_inventory 
+        updated_inventory = current_inventory + additional_inventory  # Add the additional inventory to the current inventory
 
         cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id))  # Update the inventory in the database
         mysql.connection.commit()  # Commit the transaction to save the changes
