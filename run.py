@@ -445,7 +445,7 @@ def view_orders():
     return render_template('orders.html', orders=orders)
 
 # Helper function to get PayPal access token
-def get_paypal_access_token():
+def get_paypal_access_token(): #https://developer.paypal.com/docs/subscriptions/integrate/?mark=seat-based%20pricing - Used Paypal website for instructions 
     client_id = 'AXhb2H6R17nk_ZxPsHfJVCf3SeGE73fvBzxlvYA0SKY9xm6lT-fHCO6VaxXUOvXGD1tORyDEtdgBu_mG'  # Assign PayPal client ID to the variable client_id
     secret = 'EL9c94i_SYMQd5qCGw-IyhQX6_ri47nkftdYK-XitsNRkBD23UpxC6twzpfxQtGlOd_SV0WA3TIo-ShK'  # Assign PayPal secret to the variable secret
     auth = (client_id, secret)  # Create a tuple named auth containing the client_id and secret for Basic Authentication
@@ -457,6 +457,10 @@ def get_paypal_access_token():
         return response.json()['access_token']  # Return the access token from the JSON response
     else:
         raise Exception("Could not get PayPal access token")
+
+# Reference - https://www.youtube.com/watch?v=HIwRzATH6iU&t=788s - I wanted this guy and used his logic to build out. 
+# Reference - https://www.youtube.com/watch?v=MBfJEUGNNs0 - How to Integrate PayPal Standard Checkout
+# Reference - https://www.youtube.com/watch?v=tkN4EQt1P6I - PayPal REST API Setup, Get Access Token and Make PayPal Payment API Using Server Side
 
 # PayPal create transaction route
 @app.route('/create-paypal-transaction', methods=['POST'])
@@ -475,7 +479,7 @@ def create_paypal_transaction():  # Define the function that handles PayPal tran
 
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + get_paypal_access_token()  # Get PayPal access token
+        'Authorization': 'Bearer ' + get_paypal_access_token()  # Get PayPal access token https://stackoverflow.com/questions/20048477/paypal-access-token-not-returning
     }
     order_data = {
         "intent": "CAPTURE",
@@ -522,6 +526,7 @@ def capture_paypal_transaction():  # Define the function that handles PayPal tra
 # https://pastebin.com/grmS3WxZ - Adopted the logic 
 # https://github.com/paypal/paypal-rest-api-specifications
 # https://developer.paypal.com/docs/api/orders/v2/ - used same logic, its offical Pypal instruction
+# Reference - https://www.youtube.com/watch?v=BD1dOWIABe0 - PayPal Payments: Accept Instant Payments With PayPal
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080, debug=False)
