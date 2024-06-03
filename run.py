@@ -517,6 +517,29 @@ def capture_paypal_transaction():  # Define the function that handles PayPal tra
     session.pop('cart', None)  # Clear cart
     return jsonify({'status': 'success', 'payer': capture_data['payer']})  # Return success response
 
+@app.route('/update_price/<int:book_id>', methods=['POST'])
+def update_price(book_id):  # Function to handle price updates
+    if 'username' not in session or session['username'] != 'admin':  # Check if user is admin
+        return jsonify({"success": False, "message": "Unauthorized access"}), 401  # Return error if unauthorised
+
+    data = request.get_json()  # Get JSON data from request
+    if not data:
+        return jsonify({"success": False, "message": "No data provided"}), 400  # Return error if no data
+
+    new_price = data.get('new_price')
+    if new_price is None:
+        return jsonify({"success": False, "message": "No price data provided"}), 400  # Return error if no price data
+
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)  # Create a database cursor
+    try:
+        cur.execute("UPDATE books SET price = %s WHERE id = %s", (new_price, book_id))  # Update book price
+        mysql.connection.commit()  # Commit changes to database
+        return jsonify({"success": True, "message": "Price updated successfully", "new_price": new_price})  # Return success message
+    except Exception as e:  # Handle any exceptions
+        return jsonify({"success": False, "message": "An error occurred: " + str(e)})  # Return error message
+    finally:
+        cur.close()  # Close the database cursor   
+
 # https://www.youtube.com/watch?v=HIwRzATH6iU - This gave me understanding and guidance on how to integrate PayPal with my bookstore. 
 # https://medium.com/@andrii.gorshunov/paypal-flask-integration-python-2022-1c012322801d - 
 # https://pastebin.com/grmS3WxZ - Adopted the logic 

@@ -132,7 +132,7 @@
 
             // Edit price button functionality
             $j('.edit-price-btn').on('click', function() {
-                var row = $j(this).closest('tr');
+                var row = $j(this).closest('tr'); // https://stackoverflow.com/questions/57834775/getting-closest-tr-with-jquery-when-clicking-on-an-onclick-function-inside-a-t
                 row.find('.book-price').addClass('d-none');
                 row.find('input[name="new_price"]').removeClass('d-none');
                 row.find('.edit-price-btn').addClass('d-none');
@@ -141,7 +141,7 @@
 
             // Save price button functionality
             $j('.save-price-btn').on('click', function() {
-                var row = $j(this).closest('tr');
+                var row = $j(this).closest('tr'); // https://stackoverflow.com/questions/57834775/getting-closest-tr-with-jquery-when-clicking-on-an-onclick-function-inside-a-t
                 var bookId = row.attr('id').split('-')[1];
                 var newPrice = parseFloat(row.find('input[name="new_price"]').val());
 
