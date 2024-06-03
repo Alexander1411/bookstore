@@ -27,7 +27,7 @@
                     <td><img src="{{ book.image_url }}" alt="{{ book.title }}" style="width: 50px; height: auto;"></td>
                     <td>{{ book.inventory }}</td>
                     <td>
-                        <form class="update-inventory-form" data-book-id="{{ book.id }}">
+                        <form class="update-inventory-form" data-book-id="{{ book.id }}" data-current-inventory="{{ book.inventory }}">
                             <input type="number" name="new_inventory" min="0" class="form-control" placeholder="Enter new stock">
                             <button type="submit" class="btn btn-primary mt-2">Update</button>
                         </form>
@@ -47,7 +47,10 @@
             event.preventDefault(); // This prevents default page reload 
             var form = $j(this); // https://stackoverflow.com/questions/933703/is-this-a-correct-way-to-call-a-javascript-function - Directed me into a correct way to call javascripts
             var bookId = form.data('book-id');
-            var newInventory = form.find('input[name="new_inventory"]').val();
+            var currentInventory = parseInt(form.data('current-inventory'));
+            var newInventory = form.find('input[name="new_inventory"]').val(); // https://stackoverflow.com/questions/16620220/jquery-how-to-get-input-from-a-form - Input from a from
+            var updatedInventory = currentInventory + newInventory; // Add the new stock to the current inventory
+
             $j.ajax({ // Asynchronous connection 
                 url: '/update_inventory/' + bookId,
                 type: 'POST',

@@ -306,16 +306,19 @@ def update_inventory(book_id):  # Define the function that handles the inventory
         return jsonify({"success": False, "message": "Unauthorized access"}), 401  # If not authorised, return a JSON response with an error message and 401 status code
 
     data = request.get_json()  # Get the JSON data from the request
-    new_inventory = data.get('new_inventory')  # Retrieve the new inventory amount from the JSON data
-    if new_inventory is None:  # Check if the new inventory data is provided
-        return jsonify({"success": False, "message": "No inventory data provided"}), 400  # If not, return an error message with a 400 status code
+    if not data:
+        return jsonify({"success": False, "message": "No data provided"}), 400  # If not, return an error message with a 400 status code
+
+    new_inventory = data.get('new_inventory')
+    if new_inventory is None:
+        return jsonify({"success": False, "message": "No inventory data provided"}), 400
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)  # Create a cursor to interact with the database
     try:
         cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))  # Retrieve the current inventory of the book from the database
         current_inventory = cur.fetchone()['inventory']  # Fetch the current inventory value
 
-        updated_inventory = new_inventory # Replace the existing inventory with the new value directly
+        updated_inventory = new_inventory 
 
         cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id))  # Update the inventory in the database
         mysql.connection.commit()  # Commit the transaction to save the changes
