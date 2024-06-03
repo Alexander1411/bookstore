@@ -301,7 +301,7 @@ def add_funds():
     return render_template('add_funds.html')
 
 @app.route('/update_inventory/<int:book_id>', methods=['POST']) 
-def update_inventory(book_id):  # Define the function that handles the inventory update
+def update_inventory(book_id):  # Define the function that handles the inventory update REFERENCE: https://stackoverflow.com/questions/26079754/flask-how-to-return-a-success-status-code-for-ajax-call
     if 'username' not in session or session['username'] != 'admin':  # Check if the user is logged in and is an admin
         return jsonify({"success": False, "message": "Unauthorized access"}), 401  # If not authorised, return a JSON response with an error message and 401 status code
 
@@ -335,6 +335,11 @@ def generate_po_number(length=10): # Helper function to generate a random PO num
     random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
     timestamp_part = datetime.datetime.now().strftime("%Y%m%d%H%M%S") # string "%Y%m%d%H%M%S" formats a datetime object into a string, representing the year/month/day/hour/minute and second.
     return f"{random_part}-{timestamp_part}"
+
+# Reference - https://www.youtube.com/watch?v=wEla4oQ9TqI : 30 seconds on jsonify python flask
+# Reference - https://www.youtube.com/watch?v=_gyPuorc1xo : Expains how to build Web APIs - Using Flask & Jsonify
+# Reference - https://www.youtube.com/watch?v=Up5Gm_Ls2oQ : How To Return JSON With Flask For an API
+# Reference - https://www.youtube.com/watch?v=uBiQEL43AQU : Return JSON Data in Flask
 
 @app.route('/buy_book/<int:book_id>', methods=['POST'])  # Route to handle buying a book
 def buy_book(book_id):
