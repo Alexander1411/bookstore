@@ -5,8 +5,6 @@
 {% block content %}
 <div class="container mt-5">
     <h1>Admin Inventory</h1>
-    <!-- Placeholder for displaying messages -->
-    <div id="inventoryMessage"></div>
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -29,7 +27,6 @@
                     <td><img src="{{ book.image_url }}" alt="{{ book.title }}" style="width: 50px; height: auto;"></td>
                     <td>{{ book.inventory }}</td>
                     <td>
-                        <!-- Form for updating inventory with a unique data-book-id attribute -->
                         <form class="update-inventory-form" data-book-id="{{ book.id }}">
                             <input type="number" name="new_inventory" min="0" class="form-control" placeholder="Enter new stock">
                             <button type="submit" class="btn btn-primary mt-2">Update</button>
@@ -41,43 +38,27 @@
     </table>
 </div>
 
-<!-- Include jQuery library -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function(){
-        // Attach submit event handler to all forms with class 'update-inventory-form'
-        $(".update-inventory-form").on("submit", function(event){
-            event.preventDefault();  // Prevent the default form submission behavior
-            var form = $(this);  // Get the form that triggered the event
-            var bookId = form.data("book-id");  // Get the book ID from the data attribute
-            var newInventory = parseInt(form.find("input[name='new_inventory']").val());  // Get the new inventory value
-
-            // Check if the new inventory value is valid
-            if (isNaN(newInventory) || newInventory < 0) {
-                $('#inventoryMessage').html("<p style='color:red;'>Please enter a valid number.</p>");
-                return;
-            }
-
-            // Debugging: Log the new inventory value
-            console.log("Updating book ID:", bookId, "with new inventory:", newInventory);
-
-            // Send AJAX request to update the inventory
+    $(document).ready(function() {
+        $('.update-inventory-form').on('submit', function(event) {
+            event.preventDefault();
+            var form = $(this);
+            var bookId = form.data('book-id');
+            var newInventory = form.find('input[name="new_inventory"]').val();
             $.ajax({
-                type: "POST",  // HTTP method
-                url: "/update_inventory/" + bookId,  // URL to send the request to
-                contentType: "application/json",  // Data type
-                data: JSON.stringify({new_inventory: newInventory}),  // Data to be sent in JSON format
+                url: '/update_inventory/' + bookId,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ new_inventory: parseInt(newInventory) }),
                 success: function(response) {
-                    // Display success or error message based on the response
+                    alert(response.message);
                     if (response.success) {
-                        $('#inventoryMessage').html("<p style='color:green;'>" + response.message + "</p>");
-                        location.reload();  // Reload the page to see the updated inventory
-                    } else {
-                        $('#inventoryMessage').html("<p style='color:red;'>" + response.message + "</p>");
+                        location.reload();
                     }
                 },
-                error: function() {
-                    $('#inventoryMessage').html("<p style='color:red;'>An error occurred.</p>");
+                error: function(xhr, status, error) {
+                    alert('Error: ' + error);
                 }
             });
         });

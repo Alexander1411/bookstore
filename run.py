@@ -300,7 +300,7 @@ def add_funds():
 
     return render_template('add_funds.html')
 
-@app.route('/update_inventory/<int:book_id>', methods=['POST'])
+@app.route('/update_inventory/<int:book_id>', methods=['POST']) 
 def update_inventory(book_id):  # Define the function that handles the inventory update
     if 'username' not in session or session['username'] != 'admin':  # Check if the user is logged in and is an admin
         return jsonify({"success": False, "message": "Unauthorized access"}), 401  # If not authorised, return a JSON response with an error message and 401 status code
@@ -315,7 +315,7 @@ def update_inventory(book_id):  # Define the function that handles the inventory
         cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))  # Retrieve the current inventory of the book from the database
         current_inventory = cur.fetchone()['inventory']  # Fetch the current inventory value
 
-        updated_inventory = new_inventory  # Replace the existing inventory with the new value directly
+        updated_inventory = new_inventory # Replace the existing inventory with the new value directly
 
         cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id))  # Update the inventory in the database
         mysql.connection.commit()  # Commit the transaction to save the changes
