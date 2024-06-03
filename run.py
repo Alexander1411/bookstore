@@ -518,27 +518,25 @@ def capture_paypal_transaction():  # Define the function that handles PayPal tra
     return jsonify({'status': 'success', 'payer': capture_data['payer']})  # Return success response
 
 @app.route('/update_price/<int:book_id>', methods=['POST'])
-def update_price(book_id):  # Function to handle price updates
-    if 'username' not in session or session['username'] != 'admin':  # Check if user is admin
-        return jsonify({"success": False, "message": "Unauthorized access"}), 401  # Return error if unauthorised
+def update_price(book_id):  # Define the function that handles the price update
+    if 'username' not in session or session['username'] != 'admin':  # Check if the user is logged in and is an admin
+        return jsonify({"success": False, "message": "Unauthorized access"}), 401  # If not authorised, return an error message
 
-    data = request.get_json()  # Get JSON data from request
-    if not data:
-        return jsonify({"success": False, "message": "No data provided"}), 400  # Return error if no data
+    data = request.get_json()  # Get the JSON data from the request
+    if not data or 'new_price' not in data:
+        return jsonify({"success": False, "message": "No price data provided"}), 400  # If no data, return an error message
 
-    new_price = data.get('new_price')
-    if new_price is None:
-        return jsonify({"success": False, "message": "No price data provided"}), 400  # Return error if no price data
-
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)  # Create a database cursor
+    new_price = data['new_price']
+    
     try:
-        cur.execute("UPDATE books SET price = %s WHERE id = %s", (new_price, book_id))  # Update book price
-        mysql.connection.commit()  # Commit changes to database
-        return jsonify({"success": True, "message": "Price updated successfully", "new_price": new_price})  # Return success message
-    except Exception as e:  # Handle any exceptions
-        return jsonify({"success": False, "message": "An error occurred: " + str(e)})  # Return error message
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)  # Create a cursor to interact with the database
+        cur.execute("UPDATE books SET price = %s WHERE id = %s", (new_price, book_id))  # Update the price in the database
+        mysql.connection.commit()  # Commit the transaction
+        return jsonify({"success": True, "message": "Price updated successfully"})  # Return success message
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})  # Return error message if any exception occurs
     finally:
-        cur.close()  # Close the database cursor   
+        cur.close()  # Close the cursor  
 
 # https://www.youtube.com/watch?v=HIwRzATH6iU - This gave me understanding and guidance on how to integrate PayPal with my bookstore. 
 # https://medium.com/@andrii.gorshunov/paypal-flask-integration-python-2022-1c012322801d - 
