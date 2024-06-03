@@ -7,6 +7,7 @@ import random
 import string
 import logging
 import requests
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -302,12 +303,13 @@ def add_funds():
 
     return render_template('add_funds.html')
 
-@app.route('/update_inventory/<int:book_id>', methods=['POST'])  # Define a route for updating inventory, accepting POST requests with an integer book_id
+@app.route('/update_inventory/<int:book_id>', methods=['POST']) 
 def update_inventory(book_id):  # Define the function that handles the inventory update
     if 'username' not in session or session['username'] != 'admin':  # Check if the user is logged in and is an admin
         return jsonify({"success": False, "message": "Unauthorized access"}), 401  # If not authorised, return a JSON response with an error message and 401 status code
 
     data = request.get_json()  # Get the JSON data from the request
+    app.logger.debug(f'Received data: {data}')  # Log the received data
     new_inventory = data.get('new_inventory')  # Retrieve the new inventory amount from the JSON data
     if new_inventory is None:  # Check if the new inventory data is provided
         return jsonify({"success": False, "message": "No inventory data provided"}), 400  # If not, return an error message with a 400 status code
@@ -316,6 +318,7 @@ def update_inventory(book_id):  # Define the function that handles the inventory
     try:
         cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))  # Retrieve the current inventory of the book from the database
         current_inventory = cur.fetchone()['inventory']  # Fetch the current inventory value
+        app.logger.debug(f'Current inventory for book ID {book_id}: {current_inventory}')  # Log the current inventory
 
         # Replace the existing inventory with the new value directly
         updated_inventory = new_inventory
@@ -324,9 +327,10 @@ def update_inventory(book_id):  # Define the function that handles the inventory
         mysql.connection.commit()  # Commit the transaction to save the changes
         return jsonify({"success": True, "message": "Inventory updated successfully"})  # Return a success message in JSON format
     except Exception as e:  # Handle any exceptions that occur
-        return jsonify({"success": False, "message": "An error occurred: " + str(e)}) 
+        app.logger.error(f'Error updating inventory: {e}')  # Log the error
+        return jsonify({"success": False, "message": "An error occurred: " + str(e)})  # Return an error message in JSON format
     finally:
-        cur.close() 
+        cur.close()  # Close the cursor
 
 # https://www.youtube.com/watch?v=Rxp3mkg2mRQ - This video helped in creating, reading, updating, and deleting records in Flask applications, which includes updating inventory. It demonstrates form handling and database interaction
 # https://flask-mysql.readthedocs.io/en/latest/ - This helped me in general for SQL, setting up the MySQL database, configuring Flask-MySQL, and interacting with the database using cursors
