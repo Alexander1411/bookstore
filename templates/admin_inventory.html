@@ -38,15 +38,17 @@
     </table>
 </div>
 
+<!-- Load jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('.update-inventory-form').on('submit', function(event) {
+    var $j = jQuery.noConflict();
+    $j(document).ready(function() {
+        $j('.update-inventory-form').on('submit', function(event) {
             event.preventDefault();
-            var form = $(this);
+            var form = $j(this);
             var bookId = form.data('book-id');
             var newInventory = form.find('input[name="new_inventory"]').val();
-            $.ajax({
+            $j.ajax({
                 url: '/update_inventory/' + bookId,
                 type: 'POST',
                 contentType: 'application/json',
