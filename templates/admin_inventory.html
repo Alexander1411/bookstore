@@ -56,7 +56,7 @@
                 success: function(response) {
                     alert(response.message);
                     if (response.success) {
-                        location.reload();
+                        $j('#book-' + bookId + ' .book-inventory').text(newInventory); // Update the inventory cell directly
                     }
                 },
                 error: function(xhr, status, error) {
