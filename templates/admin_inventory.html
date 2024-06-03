@@ -38,21 +38,21 @@
     </table>
 </div>
 
-<!-- Load jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Load jQuery: https://www.youtube.com/watch?v=nF9riePnm80&t=33s - Flask AJAX Tutorial: Basic AJAX in Flask app -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> // 
 <script>
-    var $j = jQuery.noConflict();
-    $j(document).ready(function() {
+    var $j = jQuery.noConflict(); // https://stackoverflow.com/questions/7882374/how-do-i-implement-jquery-noconflict - Implementing JQuery.noConflict()
+    $j(document).ready(function() { // https://stackoverflow.com/questions/24982226/how-to-show-ajax-response-message-in-alert - Used logic from this source 
         $j('.update-inventory-form').on('submit', function(event) {
             event.preventDefault();
-            var form = $j(this);
+            var form = $j(this); // https://stackoverflow.com/questions/933703/is-this-a-correct-way-to-call-a-javascript-function - Directed me into a correct way to call javascripts
             var bookId = form.data('book-id');
             var newInventory = form.find('input[name="new_inventory"]').val();
             $j.ajax({
                 url: '/update_inventory/' + bookId,
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ new_inventory: parseInt(newInventory) }),
+                data: JSON.stringify({ new_inventory: parseInt(newInventory) }), // https://stackoverflow.com/questions/41624332/how-to-keep-value-as-number-in-json-stringify - Keep value 
                 success: function(response) {
                     alert(response.message);
                     if (response.success) {
