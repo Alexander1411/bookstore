@@ -445,26 +445,26 @@ def view_orders():
     return render_template('orders.html', orders=orders)
 
 # Helper function to get PayPal access token
-def get_paypal_access_token(): 
-    client_id = 'AXhb2H6R17nk_ZxPsHfJVCf3SeGE73fvBzxlvYA0SKY9xm6lT-fHCO6VaxXUOvXGD1tORyDEtdgBu_mG' # Assign PayPal client ID to the variable client_id
+def get_paypal_access_token():
+    client_id = 'AXhb2H6R17nk_ZxPsHfJVCf3SeGE73fvBzxlvYA0SKY9xm6lT-fHCO6VaxXUOvXGD1tORyDEtdgBu_mG'  # Assign PayPal client ID to the variable client_id
     secret = 'EL9c94i_SYMQd5qCGw-IyhQX6_ri47nkftdYK-XitsNRkBD23UpxC6twzpfxQtGlOd_SV0WA3TIo-ShK'  # Assign PayPal secret to the variable secret
-    auth = (client_id, secret) # Create a tuple named auth containing the client_id and secret for Basic Authentication
-    data = {'grant_type': 'client_credentials'} # Create a dictionary named data with a key-value pair to specify the grant type
-    headers = {'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded'} # Create a dictionary named headers to specify the expected response and content type
+    auth = (client_id, secret)  # Create a tuple named auth containing the client_id and secret for Basic Authentication
+    data = {'grant_type': 'client_credentials'}  # Create a dictionary named data with a key-value pair to specify the grant type
+    headers = {'Accept': 'application/json', 'Content-Type': 'application/x-www-form-urlencoded'}  # Create a dictionary named headers to specify the expected response and content type
 
-    response = requests.post('https://api-m.sandbox.paypal.com/v1/oauth2/token', headers=headers, data=data, auth=auth)  #Send a POST request to PayPals OAuth2 token endpoint with headers, data, and authentication
-    if response.status_code == 200:  # Check if the response status code is 200 (indicating success)
-        return response.json()['access_token'] # Return the access token from the JSON response
+    response = requests.post('https://api-m.sandbox.paypal.com/v1/oauth2/token', headers=headers, data=data, auth=auth)  # Send a POST request to PayPal's OAuth2 token endpoint with headers, data, and authentication
+    if response.status_code == 200:  # Checking if the response status code is 200 (indicating success)
+        return response.json()['access_token']  # Return the access token from the JSON response
     else:
         raise Exception("Could not get PayPal access token")
 
 # PayPal create transaction route
 @app.route('/create-paypal-transaction', methods=['POST'])
-def create_paypal_transaction():
+def create_paypal_transaction():  # Define the function that handles PayPal transaction creation
     if 'username' not in session:  # Check if the user is logged in
         return redirect(url_for('login'))  # Redirect to login if not logged in
 
-    total_price = 0  # Initialise total price
+    total_price = 0  # Initialise the total price
     if 'cart' in session:  # Check if the cart exists
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         for book_id in session['cart']:  # Iterate through cart items
@@ -473,10 +473,9 @@ def create_paypal_transaction():
             total_price += book['price'] * session['cart'][book_id]  # Calculate total price
         cur.close()
 
-    # Create PayPal order
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + get_paypal_access_token()  # Get PayPal access token https://developer.paypal.com/reference/get-an-access-token/
+        'Authorization': 'Bearer ' + get_paypal_access_token()  # Get PayPal access token
     }
     order_data = {
         "intent": "CAPTURE",
@@ -494,11 +493,10 @@ def create_paypal_transaction():
 
 # PayPal capture transaction route
 @app.route('/capture-paypal-transaction', methods=['POST'])
-def capture_paypal_transaction():
+def capture_paypal_transaction():  # Define the function that handles PayPal transaction capture
     data = request.get_json()  # Get JSON data from request
     order_id = data.get('orderID')  # Extract order ID
 
-    # Capture PayPal order
     headers = {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + get_paypal_access_token()  # Get PayPal access token
@@ -518,18 +516,6 @@ def capture_paypal_transaction():
 
     session.pop('cart', None)  # Clear cart
     return jsonify({'status': 'success', 'payer': capture_data['payer']})  # Return success response
-
-# Function to get PayPal access token
-def get_paypal_access_token():
-    client_id = 'AXhb2H6R17nk_ZxPsHfJVCf3SeGE73fvBzxlvYA0SKY9xm6lT-fHCO6VaxXUOvXGD1tORyDEtdgBu_mG'  # PayPal client ID
-    client_secret = 'EL9c94i_SYMQd5qCGw-lyhQX6_ri47nkftdYK-XitsNRkBD23UpxC6twzpfxQtGlOd_SV0WA3TIo-ShK'  # PayPal secret key
-    auth = (client_id, client_secret)  # Authentication tuple
-    headers = {'Accept': 'application/json', 'Accept-Language': 'en_US'}  # Headers for the request
-    data = {'grant_type': 'client_credentials'}  # Data for the request
-
-    response = requests.post('https://api-m.sandbox.paypal.com/v1/oauth2/token', headers=headers, data=data, auth=auth)  # Get access token
-    access_token = response.json()['access_token']  # Extract access token from response
-    return access_token
 
 # https://www.youtube.com/watch?v=HIwRzATH6iU - This gave me understanding and guidance on how to integrate PayPal with my bookstore. 
 # https://medium.com/@andrii.gorshunov/paypal-flask-integration-python-2022-1c012322801d - 
