@@ -1,179 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Inventory</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="{{ url_for('home') }}">Bookstore</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('home') }}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('books_page') }}">Books</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('cart') }}">Cart</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('user_profile') }}">Profile</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('add_funds') }}">Add Funds</a>
-                </li>
-                {% if session['username'] == 'admin' %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_inventory') }}">Admin Inventory</a>
-                </li>
-                {% endif %}
-            </ul>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <!-- Main content -->
-    <div class="container mt-4">
-        <h1>Admin Inventory</h1>
+{% block title %}Admin Inventory{% endblock %}
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+{% block content %}
+<div class="container mt-5">
+    <h1>Admin Inventory</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Price</th>
+                <th>Image</th>
+                <th>Inventory</th>
+                <th>Restock</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+                <tr>
+                    <td>{{ book.id }}</td>
+                    <td>{{ book.title }}</td>
+                    <td>{{ book.author }}</td>
+                    <td>€{{ book.price }}</td>
+                    <td><img src="{{ book.image_url }}" alt="{{ book.title }}" style="width: 50px; height: auto;"></td>
+                    <td>{{ book.inventory }}</td>
+                    <td>
+                        <form class="update-inventory-form" data-book-id="{{ book.id }}" data-current-inventory="{{ book.inventory }}">
+                            <input type="number" name="new_inventory" min="0" class="form-control" placeholder="Enter new stock">
+                            <button type="submit" class="btn btn-primary mt-2">Update</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-        {% if books %}
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Author</th>
-                        <th>Price</th>
-                        <th>Image</th>
-                        <th>Inventory</th>
-                        <th>Restock</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for book in books %}
-                        <tr id="book-{{ book.id }}">
-                            <td>{{ book.id }}</td>
-                            <td>{{ book.title }}</td>
-                            <td>{{ book.author }}</td>
-                            <td>
-                                <span class="book-price">€{{ book.price }}</span>
-                                <input type="number" class="form-control d-none" name="new_price" placeholder="Enter new price" value="{{ book.price }}">
-                            </td>
-                            <td><img src="{{ url_for('static', filename='images/' ~ book.image) }}" alt="{{ book.title }}" class="img-thumbnail" width="100"></td>
-                            <td class="book-inventory">{{ book.inventory }}</td>
-                            <td>
-                                <form class="update-inventory-form" data-book-id="{{ book.id }}">
-                                    <input type="number" class="form-control" name="new_inventory" placeholder="Enter new stock">
-                                    <button type="submit" class="btn btn-primary mt-2">Update</button>
-                                </form>
-                                <button class="btn btn-info mt-2 edit-price-btn">Edit Price</button>
-                                <button class="btn btn-success mt-2 save-price-btn d-none">Save Price</button>
-                                <button class="btn btn-secondary mt-2 cancel-price-btn d-none">Cancel</button>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No books found in inventory.</p>
-        {% endif %}
-    </div>
+<!-- Load jQuery: https://www.youtube.com/watch?v=nF9riePnm80&t=33s - Flask AJAX Tutorial: Basic AJAX in Flask app -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> // 
+<script>
+    var $j = jQuery.noConflict(); // https://stackoverflow.com/questions/7882374/how-do-i-implement-jquery-noconflict - Implementing JQuery.noConflict()
+    $j(document).ready(function() { // https://stackoverflow.com/questions/24982226/how-to-show-ajax-response-message-in-alert - Used logic from this source 
+        $j('.update-inventory-form').on('submit', function(event) {
+            event.preventDefault(); // This prevents default page reload 
+            var form = $j(this); // https://stackoverflow.com/questions/933703/is-this-a-correct-way-to-call-a-javascript-function - Directed me into a correct way to call javascripts
+            var bookId = form.data('book-id');
+            var additionalInventory = parseInt(form.find('input[name="new_inventory"]').val());
+            var currentInventory = parseInt($j('#book-' + bookId + ' .book-inventory').text());
+            var updatedInventory = currentInventory + additionalInventory;
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        var $j = jQuery.noConflict(); // https://stackoverflow.com/questions/7882374/how-do-i-implement-jquery-noconflict
-        $j(document).ready(function() { // https://stackoverflow.com/questions/24982226/how-to-show-ajax-response-message-in-alert
-            $j('.update-inventory-form').on('submit', function(event) { // https://stackoverflow.com/questions/933703/is-this-a-correct-way-to-call-a-javascript-function
-                event.preventDefault(); // This prevents default page reload
-                var form = $j(this); // https://stackoverflow.com/questions/933703/is-this-a-correct-way-to-call-a-javascript-function
-                var bookId = form.data('book-id');
-                var additionalInventory = parseInt(form.find('input[name="new_inventory"]').val());
-                var currentInventory = parseInt($j('#book-' + bookId + ' .book-inventory').text());
-                var updatedInventory = currentInventory + additionalInventory;
-
-                $j.ajax({ // Asynchronous AJAX request
-                    url: '/update_inventory/' + bookId,
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ additional_inventory: additionalInventory }), // https://stackoverflow.com/questions/41624332/how-to-keep-value-as-number-in-json-stringify
-                    success: function(response) {
-                        alert(response.message); // https://stackoverflow.com/questions/24982226/how-to-show-ajax-response-message-in-alert
-                        if (response.success) {
-                            $j('#book-' + bookId + ' .book-inventory').text(updatedInventory); // Update the inventory cell directly
-                            form.find('input[name="new_inventory"]').val(''); // Clear the input field
-                        }
-                    },
-                    error: function(xhr, status, error) { // https://stackoverflow.com/questions/377644/jquery-ajax-error-handling-show-custom-exception-messages
-                        alert('Error: ' + error);
+            $j.ajax({ // Asynchronous AJAX request 
+                url: '/update_inventory/' + bookId,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ additional_inventory: additionalInventory }), // https://stackoverflow.com/questions/41624332/how-to-keep-value-as-number-in-json-stringify - Keep value 
+                success: function(response) {
+                    alert(response.message);
+                    if (response.success) {
+                        
+                        $j('#book-' + bookId + ' .book-inventory').text(updatedInventory); // Update the inventory cell directly
+                        form.find('input[name="new_inventory"]').val(''); // Clear the input field
                     }
-                });
-            });
-
-            // Edit price button functionality
-            $j('.edit-price-btn').on('click', function() {
-                var row = $j(this).closest('tr');
-                row.find('.book-price').addClass('d-none');
-                row.find('input[name="new_price"]').removeClass('d-none');
-                row.find('.edit-price-btn').addClass('d-none');
-                row.find('.save-price-btn, .cancel-price-btn').removeClass('d-none');
-            });
-
-            // Save price button functionality
-            $j('.save-price-btn').on('click', function() {
-                var row = $j(this).closest('tr');
-                var bookId = row.attr('id').split('-')[1];
-                var newPrice = parseFloat(row.find('input[name="new_price"]').val());
-
-                $j.ajax({
-                    url: '/update_price/' + bookId,
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ new_price: newPrice }),
-                    success: function(response) {
-                        alert(response.message); // https://stackoverflow.com/questions/24982226/how-to-show-ajax-response-message-in-alert
-                        if (response.success) {
-                            row.find('.book-price').text('€' + newPrice.toFixed(2)).removeClass('d-none');
-                            row.find('input[name="new_price"]').addClass('d-none');
-                            row.find('.edit-price-btn').removeClass('d-none');
-                            row.find('.save-price-btn, .cancel-price-btn').addClass('d-none');
-                        }
-                    },
-                    error: function(xhr, status, error) { // https://stackoverflow.com/questions/377644/jquery-ajax-error-handling-show-custom-exception-messages
-                        alert('Error: ' + error);
-                    }
-                });
-            });
-
-            // Cancel price button functionality
-            $j('.cancel-price-btn').on('click', function() {
-                var row = $j(this).closest('tr'); // https://stackoverflow.com/questions/57834775/getting-closest-tr-with-jquery-when-clicking-on-an-onclick-function-inside-a-t
-                row.find('.book-price').removeClass('d-none');
-                row.find('input[name="new_price"]').addClass('d-none');
-                row.find('.edit-price-btn').removeClass('d-none');
-                row.find('.save-price-btn, .cancel-price-btn').addClass('d-none');
+                },
+                error: function(xhr, status, error) { // https://stackoverflow.com/questions/377644/jquery-ajax-error-handling-show-custom-exception-messages - Error handling, show custom exeption message 
+                    alert('Error: ' + error);
+                }
             });
         });
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}

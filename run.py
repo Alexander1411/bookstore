@@ -460,7 +460,7 @@ def get_paypal_access_token():
 
 # PayPal create transaction route
 @app.route('/create-paypal-transaction', methods=['POST'])
-def create_paypal_transaction():  # Define the function that handles PayPal transaction creation https://stackoverflow.com/questions/68740537/how-to-create-a-paypal-payment-with-a-custom-amount
+def create_paypal_transaction():  # Define the function that handles PayPal transaction creation
     if 'username' not in session:  # Check if the user is logged in
         return redirect(url_for('login'))  # Redirect to login if not logged in
 
@@ -516,27 +516,6 @@ def capture_paypal_transaction():  # Define the function that handles PayPal tra
 
     session.pop('cart', None)  # Clear cart
     return jsonify({'status': 'success', 'payer': capture_data['payer']})  # Return success response
-
-@app.route('/update_price/<int:book_id>', methods=['POST'])
-def update_price(book_id):  # Define the function that handles the price update
-    if 'username' not in session or session['username'] != 'admin':  # Check if the user is logged in and is an admin
-        return jsonify({"success": False, "message": "Unauthorized access"}), 401  # If not authorised, return an error message
-
-    data = request.get_json()  # Get the JSON data from the request
-    if not data or 'new_price' not in data:
-        return jsonify({"success": False, "message": "No price data provided"}), 400  # If no data, return an error message
-
-    new_price = data['new_price']
-    
-    try:
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)  # Create a cursor to interact with the database
-        cur.execute("UPDATE books SET price = %s WHERE id = %s", (new_price, book_id))  # Update the price in the database
-        mysql.connection.commit()  # Commit the transaction
-        return jsonify({"success": True, "message": "Price updated successfully"})  # Return success message
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)})  # Return error message if any exception occurs
-    finally:
-        cur.close()  # Close the cursor  
 
 # https://www.youtube.com/watch?v=HIwRzATH6iU - This gave me understanding and guidance on how to integrate PayPal with my bookstore. 
 # https://medium.com/@andrii.gorshunov/paypal-flask-integration-python-2022-1c012322801d - 
