@@ -463,7 +463,6 @@ def get_paypal_access_token(): #https://developer.paypal.com/docs/subscriptions/
     else:
         raise Exception("Could not get PayPal access token")
 
-# Reference - https://www.youtube.com/watch?v=HIwRzATH6iU&t=788s - I wanted this guy and used his logic to build out. 
 # Reference - https://www.youtube.com/watch?v=MBfJEUGNNs0 - How to Integrate PayPal Standard Checkout
 # Reference - https://www.youtube.com/watch?v=tkN4EQt1P6I - PayPal REST API Setup, Get Access Token and Make PayPal Payment API Using Server Side
 
