@@ -460,7 +460,7 @@ def get_paypal_access_token():
 
 # PayPal create transaction route
 @app.route('/create-paypal-transaction', methods=['POST'])
-def create_paypal_transaction():  # Define the function that handles PayPal transaction creation
+def create_paypal_transaction():  # Define the function that handles PayPal transaction creation https://stackoverflow.com/questions/68740537/how-to-create-a-paypal-payment-with-a-custom-amount
     if 'username' not in session:  # Check if the user is logged in
         return redirect(url_for('login'))  # Redirect to login if not logged in
 

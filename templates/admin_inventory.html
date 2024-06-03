@@ -132,7 +132,7 @@
 
             // Edit price button functionality
             $j('.edit-price-btn').on('click', function() {
-                var row = $j(this).closest('tr'); // https://stackoverflow.com/questions/57834775/getting-closest-tr-with-jquery-when-clicking-on-an-onclick-function-inside-a-t
+                var row = $j(this).closest('tr');
                 row.find('.book-price').addClass('d-none');
                 row.find('input[name="new_price"]').removeClass('d-none');
                 row.find('.edit-price-btn').addClass('d-none');
@@ -141,7 +141,7 @@
 
             // Save price button functionality
             $j('.save-price-btn').on('click', function() {
-                var row = $j(this).closest('tr'); // https://stackoverflow.com/questions/57834775/getting-closest-tr-with-jquery-when-clicking-on-an-onclick-function-inside-a-t
+                var row = $j(this).closest('tr');
                 var bookId = row.attr('id').split('-')[1];
                 var newPrice = parseFloat(row.find('input[name="new_price"]').val());
 
@@ -151,7 +151,7 @@
                     contentType: 'application/json',
                     data: JSON.stringify({ new_price: newPrice }),
                     success: function(response) {
-                        alert(response.message);
+                        alert(response.message); // https://stackoverflow.com/questions/24982226/how-to-show-ajax-response-message-in-alert
                         if (response.success) {
                             row.find('.book-price').text('€' + newPrice.toFixed(2)).removeClass('d-none');
                             row.find('input[name="new_price"]').addClass('d-none');
@@ -159,7 +159,7 @@
                             row.find('.save-price-btn, .cancel-price-btn').addClass('d-none');
                         }
                     },
-                    error: function(xhr, status, error) {
+                    error: function(xhr, status, error) { // https://stackoverflow.com/questions/377644/jquery-ajax-error-handling-show-custom-exception-messages
                         alert('Error: ' + error);
                     }
                 });
