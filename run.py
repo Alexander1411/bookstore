@@ -16,13 +16,10 @@ app.secret_key = 'supersecretkey' # Set the secret key for session management
 # MySQL Configuration
 app.config["MYSQL_HOST"] = "10.0.0.4"  # my VM IP
 app.config["MYSQL_USER"] = "remote_user"
-app.config["MYSQL_PASSWORD"] = "alexander"  # explain how password was changed (High pressure)
+app.config["MYSQL_PASSWORD"] = "alexander"  # Password
 app.config["MYSQL_DB"] = "bookstore_users"
 
 mysql = MySQL(app)
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
 
 @app.route("/")
 def home():
@@ -30,7 +27,7 @@ def home():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':  # sets session variables after checking credentials, 
+    if request.method == 'POST':  # Check if the request method is POST
         username = request.form['username'] # Retrieve
         pwd = request.form['password'] # Retrieve
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor) # cursor for the database
@@ -62,7 +59,7 @@ def register():
         name = request.form['name'] # Retrieve
         address = request.form['address'] # Retrieve
         
-        # Checks if any of the required fields are missing
+        # Display a notification if any required fields are missing
         if not username or not pwd or not email or not name or not address:
             flash('All fields are required!', 'danger') # Notification
             return redirect(url_for('register'))
@@ -303,13 +300,12 @@ def add_funds():
 
     return render_template('add_funds.html')
 
-@app.route('/update_inventory/<int:book_id>', methods=['POST']) 
+@app.route('/update_inventory/<int:book_id>', methods=['POST'])
 def update_inventory(book_id):  # Define the function that handles the inventory update
     if 'username' not in session or session['username'] != 'admin':  # Check if the user is logged in and is an admin
         return jsonify({"success": False, "message": "Unauthorized access"}), 401  # If not authorised, return a JSON response with an error message and 401 status code
 
     data = request.get_json()  # Get the JSON data from the request
-    app.logger.debug(f'Received data: {data}')  # Log the received data
     new_inventory = data.get('new_inventory')  # Retrieve the new inventory amount from the JSON data
     if new_inventory is None:  # Check if the new inventory data is provided
         return jsonify({"success": False, "message": "No inventory data provided"}), 400  # If not, return an error message with a 400 status code
@@ -318,16 +314,13 @@ def update_inventory(book_id):  # Define the function that handles the inventory
     try:
         cur.execute("SELECT inventory FROM books WHERE id = %s", (book_id,))  # Retrieve the current inventory of the book from the database
         current_inventory = cur.fetchone()['inventory']  # Fetch the current inventory value
-        app.logger.debug(f'Current inventory for book ID {book_id}: {current_inventory}')  # Log the current inventory
 
-        # Replace the existing inventory with the new value directly
-        updated_inventory = new_inventory
+        updated_inventory = new_inventory  # Replace the existing inventory with the new value directly
 
         cur.execute("UPDATE books SET inventory = %s WHERE id = %s", (updated_inventory, book_id))  # Update the inventory in the database
         mysql.connection.commit()  # Commit the transaction to save the changes
         return jsonify({"success": True, "message": "Inventory updated successfully"})  # Return a success message in JSON format
     except Exception as e:  # Handle any exceptions that occur
-        app.logger.error(f'Error updating inventory: {e}')  # Log the error
         return jsonify({"success": False, "message": "An error occurred: " + str(e)})  # Return an error message in JSON format
     finally:
         cur.close()  # Close the cursor
@@ -386,57 +379,44 @@ def generate_po_number():
 #REFERENCE: https://overiq.com/flask-101/creating-urls-in-flask/?utm_content=cmp-true - URL creation and handling in Flask
 
 
-# Added methods=['GET', 'POST'] to allow both GET and POST requests
+
 @app.route('/purchase', methods=['POST'])
 def purchase():
-    if 'username' not in session: # checks if the user is logged in
+    if 'username' not in session:  # Check if the user is logged in
         return redirect(url_for('login'))
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Generate a unique PO number
-    po_number = generate_po_number() # Generate a new purchase order number
-    logging.debug(f"Generated PO Number: {po_number}")
 
-    total_cost = 0 #Initialis the Total Cost Sets total_cost to 0
+    po_number = generate_po_number()  # Generate a new purchase order number
+
+    total_cost = 0  # Initialise the total cost
     for book_id, quantity in session['cart'].items():
-        # Fetch book details
-        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,)) # Retrieve the book details from the database
+        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))  # Retrieve the book details from the database
         book = cur.fetchone()
-        total_cost += book['price'] * quantity #Calculate the total cost of items in the cart
+        total_cost += book['price'] * quantity  # Calculate the total cost of items in the cart
 
-    # Fetch user balance
-    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))
+    cur.execute("SELECT balance FROM tbl_users WHERE id = %s", (session['user_id'],))  # Fetch the user's balance
     user = cur.fetchone()
 
-    if user['balance'] < total_cost: # Checking if the user has sufficient funds
+    if user['balance'] < total_cost:  # Check if the user has sufficient funds
         flash('Insufficient funds for this purchase.', 'danger')
-        cur.close() # Close the cursor if funds are insufficient
+        cur.close()
         return redirect(url_for('cart'))
 
-    for book_id, quantity in session['cart'].items(): # Iterate over items in the cart again
-        # Fetch book details
-        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,)) # Retrieve the user's current balance from the database
+    for book_id, quantity in session['cart'].items():
+        cur.execute("SELECT * FROM books WHERE id = %s", (book_id,))  # Retrieve the book details from the database
         book = cur.fetchone()
 
-        # Insert order details
-        cur.execute(
-            "INSERT INTO orders (user_id, book_id, quantity, po_number, order_date) VALUES (%s, %s, %s, %s, NOW())",
-            (session['user_id'], book_id, quantity, po_number) # Inserts the order details into the orders table
-        )
-        logging.debug(f"Inserted order for book ID {book_id} with PO Number: {po_number}") # Log the order insertion
+        cur.execute("INSERT INTO orders (user_id, book_id, quantity, po_number, order_date) VALUES (%s, %s, %s, %s, NOW())",
+                    (session['user_id'], book_id, quantity, po_number))  # Insert order details
+        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id))  # Update book inventory
 
-        # Update book inventory
-        cur.execute("UPDATE books SET inventory = inventory - %s WHERE id = %s", (quantity, book_id)) # Decrease the books inventory by the quantity purchased
-
-    # Deduct balance
-    new_balance = user['balance'] - total_cost # Calculate the new balance
-    cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id'])) # Update the user's balance in the database
-    mysql.connection.commit() # Commit the transaction to save all changes
+    new_balance = user['balance'] - total_cost  # Deduct the total cost from the user's balance
+    cur.execute("UPDATE tbl_users SET balance = %s WHERE id = %s", (new_balance, session['user_id']))  # Update the user's balance in the database
+    mysql.connection.commit()
     cur.close()
 
-    # Clear cart
-    session.pop('cart', None)
+    session.pop('cart', None)  # Clear the cart
 
     flash('Purchase successful!', 'success')
     return redirect(url_for('view_orders'))
