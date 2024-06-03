@@ -6,7 +6,14 @@
     <title>Cart</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- PayPal SDK -->
-    <script src="https://www.paypal.com/sdk/js?client-id=AXhb2H6R17nk_ZxPsHfJVCf3SeGE73fvBzxlvYA0SKY9xm6lT-fHCO6VaxXUOvXGD1tORyDEtdgBu_mG&currency=EUR"></script> <!-- PayPal SDK script -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AXhb2H6R17nk_ZxPsHfJVCf3SeGE73fvBzxlvYA0SKY9xm6lT-fHCO6VaxXUOvXGD1tORyDEtdgBu_mG&currency=EUR"></script>
+    <!-- Custom CSS for buttons -->
+    <style>
+        .btn-block-custom {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -89,19 +96,18 @@
             </table>
             <h3>Total Price: €{{ total_price }}</h3>
             <form action="{{ url_for('purchase') }}" method="POST">
-                <button type="submit" class="btn btn-primary">Purchase</button>
+                <button type="submit" class="btn btn-primary btn-lg btn-block-custom">Purchase</button>
             </form>
-            <a href="{{ url_for('clear_cart') }}" class="btn btn-danger">Clear Cart</a>
+            <a href="{{ url_for('clear_cart') }}" class="btn btn-danger btn-lg btn-block-custom">Clear Cart</a>
 
             <!-- PayPal Button Container -->
-            <div id="paypal-button-container" class="mt-3"></div> <!-- Container for the PayPal button -->
+            <div id="paypal-button-container" class="mt-3"></div>
 
             <script>
-                // Initialise PayPal Buttons
                 paypal.Buttons({
-                    // Create an order
-                    createOrder: function(data, actions) { // Function to create a new order
-                        return fetch('/create-paypal-transaction', { // Send a request to create a PayPal transaction
+                    // Function to create a new order
+                    createOrder: function(data, actions) {
+                        return fetch('/create-paypal-transaction', {
                             method: 'post' // Use POST method for the request
                         }).then(function(res) {
                             return res.json(); // Parse the JSON response
@@ -109,9 +115,8 @@
                             return orderData.id; // Return the order ID from the server response
                         });
                     },
-                    // Capture the order after approval
                     onApprove: function(data, actions) { // Function to capture the order after the buyer approves the payment
-                        return fetch('/capture-paypal-transaction', { // Send a request to capture the PayPal transaction
+                        return fetch('/capture-paypal-transaction', {
                             method: 'post', // Use POST method for the request
                             headers: {
                                 'content-type': 'application/json' // Set the request header to JSON
