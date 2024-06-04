@@ -59,8 +59,9 @@
                 success: function(response) {
                     alert(response.message);
                     if (response.success) {
-                        
+                        alert( $j('#book-' + bookId + ' .book-inventory').text)
                         $j('#book-' + bookId + ' .book-inventory').text(updatedInventory); // Update the inventory cell directly
+                        alert( $j('#book-' + bookId + ' .book-inventory').text)
                         form.find('input[name="new_inventory"]').val(''); // Clear the input field
                     }
                 },
